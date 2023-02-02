@@ -28,7 +28,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 
-import serial
+#import serial
 import json
 import time
 import rospy
@@ -65,9 +65,9 @@ class perceptionNODE():
     def _write(self, msg):
         """ Represents the writing activity on the the serial.
         """
-        command = json.loads(msg.data)
+        #command = json.loads(msg.data)
         #command = msg.data
-        print(command)
+        print(msg.data)
             
 if __name__ == "__main__":
     perNod = perceptionNODE()
