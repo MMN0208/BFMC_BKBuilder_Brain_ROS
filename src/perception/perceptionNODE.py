@@ -41,7 +41,7 @@ class perceptionNODE():
               
         rospy.init_node('perceptionNODE', anonymous=False)
         
-        self.command_subscriber = rospy.Subscriber("/automobile/command", String, self._write)      
+        self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
     
      # ===================================== RUN ==========================================
     def run(self):
