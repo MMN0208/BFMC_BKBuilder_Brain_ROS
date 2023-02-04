@@ -47,7 +47,7 @@ class perceptionNODE():
     def run(self):
         """Apply the initializing methods and start the threads
         """
-        rospy.loginfo("starting serialNODE")
+        rospy.loginfo("starting perceptionNODE")
         self._read()    
         
     # ===================================== READ ==========================================
@@ -65,9 +65,9 @@ class perceptionNODE():
     def _write(self, msg):
         """ Represents the writing activity on the the serial.
         """
-        #command = json.loads(msg.data)
+        command = json.loads(msg.data)
         #command = msg.data
-        print(msg.data)
+        print(command)
             
 if __name__ == "__main__":
     perNod = perceptionNODE()
