@@ -1,22 +1,22 @@
 # BFMC - Brain ROS Project
 
 ## Perception Modules
-├── perception
-│   ├── lane_detection
-│      	├── calibrate_imgs
+├── perception \
+│   ├── lane_detection \
+│      	├── calibrate_imgs \
 |			├──*.jpeg 
-│   	├── core 
-|			├── save
-|				├── .pkl
-|			├── __init__.py
-|			├── camera.py
-|			├── laneDetection.py
-|			├── main.py
-|			├── utils.py
+│   	├── core \
+|			├── save \
+|				├── .pkl \
+|			├── __init__.py \
+|			├── camera.py \
+|			├── laneDetection.py \
+|			├── main.py \
+|			├── utils.py \
 |
-│   ├── CMakeLists.txt 
-│   ├──	package.xml 
-│   ├──	perceptionNODE.py 
+│	├── CMakeLists.txt \
+│   ├──	package.xml  \
+│   ├──	perceptionNODE.py \
 
 First, please examine the class diagram to understand information about some classes and relationships.
 
