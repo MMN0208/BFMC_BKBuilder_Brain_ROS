@@ -97,25 +97,37 @@ class actionNODE:
             self.control.setsomething
         if self.run_state == RunStates.SWITCH_LANE:
             pass
+
         if self.run_state == RunStates.WAIT_FOR_PEDESTRIANS: #cho thay doi trang thai tu object_detection
             if(nguoi di bo di qua roi):
                 self.run_state == RunStates.GO_STRAIGHT
+
         if self.run_state == RunStates.OVERTAKE: #cho thay doi trang thai tu server
             if(overtake xong roi()): # HARD => PLEASE INVESTIGATE MORE
                 self.run_state == RunStates.GO_STRAIGHT
+
         if self.run_state == RunStates.PARKING: #cho thay doi trang thai tu server
             if(cho` parking xong roi):
                 self.run_state == RunStates.OUT_OF_PARKING
+
         if self.run_state == RunStates.OUT_OF_PARKING:
             if(ra khoi parking):
                 self.run_state == RunStates.GO_STRAIGHT
+
         if self.run_state == RunStates.FOLLOWING_TRAFFIC: #doi tin hieu tu traffic light
+            
             if(self.traffic_light == Traffic_Light_Rule.GREEN_LIGHT):
+                pass
+
             if(self.traffic_light == Traffic_Light_Rule.RED_LIGHT):
+                pass
+
             if(self.traffic_light == Traffic_Light_Rule.YELLOW_LIGHT):
+
         if self.run_state == RunStates.ROUNDABOUND:
             dosomething until out of ROUNDABOUND
             self.run_state == RunStates.GO_STRAIGHT
+
     def main_process(self):
             while not rospy.is_shutdown() and start: 
                 while not start: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
