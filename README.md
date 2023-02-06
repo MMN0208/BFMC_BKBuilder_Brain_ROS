@@ -1,23 +1,35 @@
 # BFMC - Brain ROS Project
 
-## Perception Modules
-├── perception \
-│   ├── lane_detection \
-│      	├── calibrate_imgs \
+## Module Structure 
+```bash
+├── perception 
+│   ├── lane_detection 
+│      	├── calibrate_imgs 
 |			├──*.jpeg 
-│   	├── core \
-|			├── save \
-|				├── .pkl \
-|			├── __init__.py \
-|			├── camera.py \
-|			├── laneDetection.py \
-|			├── main.py \
-|			├── utils.py \
-|
+│   	├── core 
+|			├── save 
+|				├── .pkl 
+|			├── __init__.py 
+|			├── camera.py 
+|			├── laneDetection.py 
+|			├── main.py 
+|			├── utils.py 
+|   ├── detection
+|  		├── edgetpumodel 
+|           ├── __init__.py
+|           ├── edgetpumodel.py
+|           ├── nms.py
+|           ├── utils.py        
+|  		├── weights 
+|           ├── traffic.tflite 
+|  		├── data.yaml 
+|  		├── detect.py
+|  		├── DetectionProcess.py
+|  		├── DetectionThread.py
 │	├── CMakeLists.txt \
 │   ├──	package.xml  \
 │   ├──	perceptionNODE.py \
-
+```
 First, please examine the class diagram to understand information about some classes and relationships.
 
 <img src = "figures/Perception_module-Class.png" width = "700" height = "500">
