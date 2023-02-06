@@ -38,10 +38,32 @@ from utils.srv        import subscribing, subscribingResponse
 
 class perceptionNODE():
     def __init__(self):
+        
+        """perceptionNODE is used to publish messages produced by
+        the perception service including lane detection and object detection
+
+        Todo:
+            1. Create two publishers that publish two topics: "automobile/lane" and "automobile/object.
+                Then, subscribers that were defined in actionNODE can get messages for further processing.
+            
+            2. From the lane_detection and object_detection, we define some core functions to 
+                process scene and publish messages.
+            
+                2.1   Define function to send the bird eye view of the binary threshold.
+                        * Ref: /perception/lane_detection/laneDetection.py
+
+                2.2   Define function to send the radius of curvature of left and right lanes.
+                        * Ref: perception/lane_detection/camera.py
+
+                2.3   Define function to send the sign detection (class, bounding box).
+                        * Ref: perception/object_detection/DetectionProcess.py
+        
+
+        """
               
         rospy.init_node('perceptionNODE', anonymous=False)
         
-        self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
+        # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
     
      # ===================================== RUN ==========================================
     def run(self):

@@ -71,23 +71,28 @@ class actionNODE:
     def imu_check(self,msg):
         # neu gap doc thi doi state thanh len doc
         # neu xuong doc thi doi state thanh xuong doc
-        
+        pass
+
     def object_check(self,msg):
-        
-    def traffic_check(self,msg):
+        pass 
     
+    def traffic_check(self,msg):
+        pass
+
     def lane_check(self, msg): # neu xe qua lech do voi duong dang di => return goc steer
         # xu ly xe di trong nay
         # gui toc do + goc lai
         # tinh toan gi do de self.angle and self.speed
         # state machine se duoc xu ly o day
         # if state == len doc hoac xuong doc: xu ly toc do
+        pass
 
     def check_server(self, msg):
         # xu ly tin hieu overtake static car
         # xu ly tin hieu dung xe
         # xu ly tin hieu den xanh den do
-        
+        pass
+
     def auto_control(self): # chi de check state machine
         if self.run_state == RunStates.GO_STRAIGHT:
             if gap nguoi di bo:
@@ -123,9 +128,10 @@ class actionNODE:
                 pass
 
             if(self.traffic_light == Traffic_Light_Rule.YELLOW_LIGHT):
+                pass
 
         if self.run_state == RunStates.ROUNDABOUND:
-            dosomething until out of ROUNDABOUND
+            # dosomething until out of ROUNDABOUND
             self.run_state == RunStates.GO_STRAIGHT
 
     def main_process(self):
