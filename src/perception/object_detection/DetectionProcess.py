@@ -22,8 +22,8 @@ import yaml
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-from src.utils.detection.edgetpumodel import * 
 from src.utils.detection.edgetpumodel.utils import plot_one_box, Colors, get_image_tensor
+from src.utils.detection.edgetpumodel.edgetpumodel import EdgeTPUModel
 
 from src.templates.workerprocess import WorkerProcess
 
@@ -41,6 +41,15 @@ class DetectionProcess(WorkerProcess):
             List of input pipes, only the first pipe is used to transfer the captured frames. 
         outPs : list(Pipe) 
             List of output pipes (not used at the moment)
+            
+        Arguments:
+        self.model_path (string): The path to the model weights (usually in weights folder)
+        self.names (string): The path to the yaml file (you can imagine this as a extra config files for the model to run)
+        self.conf_thresh (int): the detection needs to be bigger than this to register as a detection
+        self.iou_thres (int): the bounding box Intersection over Union (IoU) metric needs to be bigger than this to register as a bbox
+        self.device (int): default to 0
+        self.model: the model class
+        self.colors: the colors for the bounding box
         """
         super(DetectionProcess,self).__init__( inPs, outPs)
         self.model_path = "src/utils/detection/weights/traffic.tflite"
@@ -78,26 +87,31 @@ class DetectionProcess(WorkerProcess):
         inP : Pipe
             Input pipe to read the frames from CameraProcess or CameraSpooferProcess. 
         """
+        #INIT THE MODEL
         self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
         logging.disable(logging.CRITICAL)
         logger.disabled = False
         while True:
             try:
-                stamps, image = inP.recv()
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                stamps, image = inP.recv() #Receive the image
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) #Transform the image from BGR color space to RGB
                 output_image = image
-                #TODO
-                full_image, net_image, pad = get_image_tensor(image, 640)
-                pred = self.model.forward(net_image)
+                full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
+                pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
                 #print(f"DetectionProcess{net_image.shape}")
-                det = self.model.process_predictions(pred[0], full_image, pad)
-                #print(a)
-                for *xyxy, conf, cls in reversed(det):
-                    #Process Detections
+                det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
+                
+                
+                for *xyxy, conf, cls in reversed(det): #Process prediction loop
+                    '''
+                    xyxy (List): bounding box
+                    conf (int): prediction percentage
+                    cls (int): class index of prediction
+                    '''
                     c = int(cls)  # integer class
-                    label = f'{self.names[c]} {conf:.2f}'
-                    output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True))
-                    #pass
+                    label = f'{self.names[c]} {conf:.2f}' #Set label to the class detected
+                    output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
+                    
                 tinference, tnms = self.model.get_last_inference_time()
                 print("Frame done in {}".format(tinference+tnms))
                 

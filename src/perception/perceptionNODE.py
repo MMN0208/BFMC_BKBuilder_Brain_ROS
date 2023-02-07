@@ -33,9 +33,17 @@ import json
 import time
 import rospy
 
-from std_msgs.msg      import String
+from std_msgs.msg      import String, Image
 from utils.srv        import subscribing, subscribingResponse
+from cv_bridge       import CvBridge
 
+#import object detection
+import numpy as np
+import cv2
+from src.perception.object_detection.network.edgetpumodel import EdgeTPUModel
+from src.perception.object_detection.network.utils import plot_one_box, Colors, get_image_tensor
+
+#import lane detection
 class perceptionNODE():
     def __init__(self):
         
@@ -64,14 +72,64 @@ class perceptionNODE():
         rospy.init_node('perceptionNODE', anonymous=False)
         
         # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
-    
-     # ===================================== RUN ==========================================
+        self.command_publisher = rospy.Publisher("automobile/perception", String)
+        #======CAMERA======
+        self.bridge = CvBridge()
+        self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
+        self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
+        #======OBJECT DETECTION======
+        self.model_path = "src/perception/object_detection/weights/traffic.tflite"
+        self.names = "src/perception/object_detection/data.yaml"
+        self.conf_thresh = 0.5
+        self.iou_thresh = 0.65
+        self.device = 0
+        
+        self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
+        #self.model = None 
+        
+        self.colors = Colors()
+        #.
+        
+    # ===================================== RUN ==========================================
     def run(self):
         """Apply the initializing methods and start the threads
         """
         rospy.loginfo("starting perceptionNODE")
-        self._read()    
-        
+        #self._read() 
+        rospy.spin()   
+    
+    # ===================================== OBJECT DETECT ========================================
+    def _object(self, msg):
+        """Object detection callback
+        """
+        image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        output_image = image
+        full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
+        pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
+        #print(f"DetectionProcess{net_image.shape}")
+        det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
+                
+                
+        for *xyxy, conf, cls in reversed(det): #Process prediction loop
+            '''
+            xyxy (List): bounding box
+            conf (int): prediction percentage
+            cls (int): class index of prediction
+            '''
+            c = int(cls)  # integer class
+            label = f'{self.names[c]} {conf:.2f}' #Set label to the class detected
+            command = f'DETECT:{label}:{xyxy}'
+            self.command_publisher.publish(command)
+            #output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
+                    
+        tinference, tnms = self.model.get_last_inference_time()
+        print("Frame done in {}".format(tinference+tnms))
+     
+    # ===================================== LANE DETECT ========================================
+    def _lane(self, msg):
+        """Lane detection callback
+        """
     # ===================================== READ ==========================================
     def _read(self):
         """ It's represent the reading activity on the the serial.
