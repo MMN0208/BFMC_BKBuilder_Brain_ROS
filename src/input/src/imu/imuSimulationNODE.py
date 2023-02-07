@@ -21,12 +21,12 @@ class imuNODE():
         imudata = IMU()
         imudata.roll = 1
         imudata.yaw = 2
-        imudata.pitch = 3
+        imudata.pitch = 1
         while not rospy.is_shutdown():
             imudata = IMU()
             imudata.roll = imudata.roll + 0.1
             imudata.yaw = imudata.yaw + 0.2
-            imudata.pitch = imudata.pitch + random.randint(-10,10)
+            imudata.pitch = imudata.pitch + random.gauss(0,2)
             imudata.accelx = 0
             imudata.accely = 0
             imudata.accelz = 0

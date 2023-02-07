@@ -10,7 +10,7 @@ import math
 from enum import Enum
 import time
 
-from control.controlNODE import *
+#from control.controlNODE import *
 
 class passingRampNODE():
     def __init__(self):
@@ -42,11 +42,15 @@ class passingRampNODE():
         CURRENT_SPEED = 0 # call function get the speed
         ACCELERATE_RATE = 1.15
         DECELERATE_RATE = 0.85
-        control = controlNODE()
+        #control = controlNODE()
+        print("pitch:{}, angle:{}".format(msg.pitch,RAMP_ANGLE))
         if (pitch > 0 and pitch < RAITO_OF_ANGLE*RAMP_ANGLE): # going up the ramp
-            control.setSpeed(CURRENT_SPEED*ACCELERATE_RATE)
+            #control.setSpeed(CURRENT_SPEED*ACCELERATE_RATE)
+            print("accelerate")
         elif (pitch < 0 and pitch < -1*RAITO_OF_ANGLE*RAMP_ANGLE): #going down the ramp
-            control.setSpeed(CURRENT_SPEED*DECELERATE_RATE)
+            #control.setSpeed(CURRENT_SPEED*DECELERATE_RATE)
+            print("decelerate")
+        time.sleep(1)
 
 if __name__ == "__main__":
     passRampNode = passingRampNODE()
