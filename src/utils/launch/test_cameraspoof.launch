@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="input"   type = "cameraSpooferNODE.py"   name="cameraSpooferNODE"              output="screen"/>
+</launch>
