@@ -32,20 +32,23 @@ import io
 import numpy as np
 import time
 
+import cv2
+import glob
+
 import rospy
 
 from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
 
 class cameraSpooferNODE():
-    def __init__(self, ext = '.h264'):
+    def __init__(self, ext = '.avi'):
         """Node used for spoofing a camera/ publishing a video stream from a folder 
         with videos
         """
         # params
         self.videoSize = (640,480)
         
-        self.videoDir = "path/to/videos/directory"
+        self.videoDir = "/home/BFMC_BKBuilder_Brain_ROS/src/input/src/cameraHandler/"
         self.videos = self.open_files(self.videoDir, ext = ext)
         
         rospy.init_node('cameraSpooferNODE', anonymous=False)
