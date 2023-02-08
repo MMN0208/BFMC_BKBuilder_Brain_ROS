@@ -22,24 +22,20 @@ class State(Enum):
     RUNNING = 1
 
 class RunStates(Enum):
-    WAIT = 0
-    # GO_STRAIGHT = 0
-    # SWITCH_LANE = 1
-    # HARD_TURN = 2
-    # WAIT_FOR_PEDESTRIANS = 3
-    # OVERTAKE = 4
-    # PARKING = 5
-    # OUT_OF_PARKING = 6 
-    # FOLLOWING_TRAFFIC = 7 
-    # ROUNDABOUND = 8
-    # #
-    # #
-    # STOP_SIGN = 5
-    # PARKING = 6
-    # CROSSWALK = 7
-    # #
-    # RAMP = 8  
-    # unknown state
+    RUNNING = 0
+    WAIT = 1
+    HARD_TURN = 2
+    SWITCH_LANE = 3
+    ROUNDABOUT = 4
+    HIGHWAY = 5
+    CROSSWALK = 6
+    RAMP = 7
+    TAILING = 8
+    PARKING = 9
+    TRAFFIC_LIGHT = 10 
+    PRIORITY = 11
+    STOP = 12
+    
 class TrafficSign:
     #STOP, parking place, crosswalk, priority road, highway entrance, highway exit, roundabout, one-way road, and no-entry road. 
     STOP_SIGN = 0
@@ -48,14 +44,16 @@ class TrafficSign:
     PRIORITY_SIGN = 3
     HIGHWAY_ENTRANCE_SIGN = 4
     HIGHWAY_EXIT_SIGN = 5
-    ROUNDABOUND_SIGN = 6
+    ROUNDABOUT_SIGN = 6
     ONE_WAY_SIGN = 7
     NO_ENTRY_SIGN = 8
     NO_SIGN = 9
+    
 class TrafficLightRule(Enum):
     GREEN_LIGHT = 0
     RED_LIGHT = 1
-    YELLO_LIGHT = 2
+    YELLOW_LIGHT = 2
+    
 class actionNODE:
     def __init__(self) -> None:
         rospy.init_node('actionNODE', anonymous=False)
@@ -82,17 +80,19 @@ class actionNODE:
         self.unlock = 1
         self.main_process()
         
-    def lock_state():
+    def lock_state(self, state):
+        if not isinstance(state, RunStates):
+            raise TypeError('state must be an instance of RunStates Enum')
+
         if self.unlock:
             self.lock = 1
             self.unlock = 0
-            self.time_lock_start = rospy.get_time()
+            self.lock_start_time = rospy.get_time()
+            self.run_state = state
         
-    def unlock_state(self, state, time):
+    def unlock_state(self, time):
         if self.lock:
-            if (rospy.get_time() - self.time_lock_start) < time:
-                self.run_state = state
-            else:
+            if (rospy.get_time() - self.lock_start_time) >= time:
                 self.unlock = 1
                 self.lock = 0
     
@@ -101,34 +101,42 @@ class actionNODE:
             self.traffic_sign = TrafficSign.STOP_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
         elif msg.data == "PARKING_SIGN":
             self.traffic_sign = TrafficSign.PARKING_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
         elif msg.data == "CROSS_WALK":
             self.traffic_sign = TrafficSign.CROSS_WALK
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
         elif msg.data == "PRIORITY_SIGN":
             self.traffic_sign = TrafficSign.PRIORITY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
         elif msg.data == "HIGHWAY_ENTRANCE_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
         elif msg.data == "HIGHWAY_EXIT_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
-        elif msg.data == "ROUNDABOUND_SIGN"
-            self.traffic_sign = TrafficSign.ROUNDABOUND_SIGN
+                
+        elif msg.data == "ROUNDABOUT_SIGN"
+            self.traffic_sign = TrafficSign.ROUNDABOUT_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
         elif msg.data == "ONE_WAY_SIGN"
             self.traffic_sign = TrafficSign.ONE_WAY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
         elif msg.data == "NO_ENTRY_SIGN"
             self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
             if run_state==RUNNING:
@@ -137,11 +145,11 @@ class actionNODE:
     def wait_action(self):
             if  (    
                 (traffic_light and light_color == TrafficLightColor.GREEN_LIGHT) or 
-                (stop_sign     and rospy.get_time() - self.get_sign_time() >= 3) or
+                (stop_sign     and rospy.get_time() - self.sign_start_time >= 3) or
                 (pedestrian    and pedestrian_detection == PedestrianPosition.LEFT)
             ):
-            self.lock_state()
-            self.unlock_state(RunStates.RUNNING,1)
+            self.lock_state(RunStates.RUNNING)
+            
     def auto_control(self):
         if testRUNING:
             if self.run_state == RunStates.RUNNING:
@@ -158,6 +166,7 @@ class actionNODE:
                 print("DOING NOTHING")
             elif(self.state == State.RUNNING):
                 auto_control()
+                
 if __name__ == "__main__":
     action_node = actionNODE()
     action_node.run()
@@ -234,8 +243,8 @@ if __name__ == "__main__":
 
     #         if(self.traffic_light == Traffic_Light_Rule.YELLOW_LIGHT):
 
-    #     if self.run_state == RunStates.ROUNDABOUND:
-    #         dosomething until out of ROUNDABOUND
+    #     if self.run_state == RunStates.ROUNDABOUT:
+    #         dosomething until out of ROUNDABOUT
     #         self.run_state == RunStates.GO_STRAIGHT
 
     # def main_process(self):
