@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="action" type = "traffic_light.py" name = "trafficLightNODE" output="screen"/>
+</launch>
