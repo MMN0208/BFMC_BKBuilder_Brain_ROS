@@ -68,11 +68,11 @@ class test_pedestrian_crosswalkNODE():
         # pedestrian crossed = pedestrian passed to left land
         # ID = 0: none 1: right with crosswalk_detect 2: middle 3: left 4: right without crosswalk_detect
         # crosswalk_detect = 1
-        # if (msg == '2' or msg == '1'):
-        #     print("wait")
-        # else: 
-        #     print("run")
-        print(msg)
+        if (msg.data == 2  or msg.data == 1):
+            print("wait")
+        else: 
+            print("run")
+        # print(msg.data)
             
             
 if __name__ == "__main__":

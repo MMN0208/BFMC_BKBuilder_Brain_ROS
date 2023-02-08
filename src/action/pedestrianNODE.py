@@ -30,7 +30,10 @@ class pedestrianNODE():
         a, b, c, d = 0, 0, 0, 0 #
         
         #TODOS: Process and return is_pedestrian (bool)
-        
+        is_pedestrian = 0
+        pedestrian_infront = 0
+        if (pedestrian_infront)
+            while (px - pw > a and px + pw < d) is_pedestrian = 1
         
         pass
     

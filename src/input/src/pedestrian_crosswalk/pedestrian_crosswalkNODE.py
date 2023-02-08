@@ -28,7 +28,6 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 
-import socket
 import json
 
 import rospy
@@ -45,29 +44,14 @@ class pedestrian_crosswalkNODE():
         
         # BNO publisher object
         self.pedestrian_crosswalk = rospy.Publisher("/automobile/pedestrian_crosswalk", Byte, queue_size=1)
-        # self.pedestrian_crosswalk_wait = rospy.Publisher("/automobile/pedestrian_crosswalk_wait", Byte, queue_size=1)
-        # self.pedestrian_crosswalk_middle_publisher = rospy.Publisher("/automobile/semaphore/antimaster", Byte, queue_size=1)
-        # self.pedestrian_crosswalk_right_publisher = rospy.Publisher("/automobile/semaphore/start", Byte, queue_size=1)
 
     #================================ RUN ========================================
     def run(self):
         """ Method for running listener algorithm.
         """
         rospy.loginfo("starting pedestrian_crosswalkNODE")
-        self._init_socket()
         self._getting()
-        
-    #================================ INIT SOCKET ========================================
-    def _init_socket(self):
-        # Communication parameters, create and bind socket
-        self.PORT = 50007
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) #(internet, UDP)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        self.sock.bind(('', self.PORT))
-        self.sock.settimeout(1)
-        
-        
+
     #================================ GETTING ========================================
     def _getting(self): 
         # Listen for incomming broadcast messages
@@ -80,22 +64,6 @@ class pedestrian_crosswalkNODE():
                 # ID = 0: none 1: right with crosswalk_detect 2: middle 3: left 4: right without crosswalk_detect
                 ID = 2
                 self.pedestrian_crosswalk.publish(ID)
-                # data, addr = self.sock.recvfrom(4096) # buffer size is 1024 bytes
-                # dat = data.decode('utf-8')
-                # dat = json.loads(dat)
-                # dat = {
-                #     "id": 2,
-                #     "state": 0
-                # }
-                # self.pedestrian_crosswalk.publish(dat['id'])
-                # ID = int(dat['id'])
-                # state = int(dat['state'])
-                # ID = 0: none 1: right 2: middle 3: left
-                # crosswalk_detect = 0
-                # if (ID == 2 or (ID == 1 and crosswalk_detect)):
-                #     self.pedestrian_crosswalk_wait(state)
-                # else: 
-                #     self.pedestrian_crosswalk_run(state)
 
             except Exception as e:
                 if str(e) !="timed out":
