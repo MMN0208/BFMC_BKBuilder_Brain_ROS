@@ -32,23 +32,23 @@ class passingRampNODE():
         This function receive a pitch - a value illustrate how car is tilted ( measure in radian)
         and control the car to accelerate/decelerate
         """
-        RAMP_HEIGHT = 100
-        RAMP_WIDTH = 25 # not know the exact value
+        RAMP_HEIGHT = 15
+        RAMP_WIDTH = 100 # not know the exact value
         RAMP_ANGLE = math.atan(RAMP_HEIGHT/RAMP_WIDTH)
         """
         assume that if the go up the ramp, the value of pitch will be positive, vice versa
         """
         RAITO_OF_ANGLE = 0.5
-        CURRENT_SPEED = 0 # call function get the speed
+        BASE_SPEED = 0.1 # call function get the speed
         ACCELERATE_RATE = 1.15
         DECELERATE_RATE = 0.85
         #control = controlNODE()
         print("pitch:{}, angle:{}".format(msg.pitch,RAMP_ANGLE))
-        if (pitch > 0 and pitch < RAITO_OF_ANGLE*RAMP_ANGLE): # going up the ramp
-            #control.setSpeed(CURRENT_SPEED*ACCELERATE_RATE)
+        if (pitch > 0 and pitch <= RAITO_OF_ANGLE*RAMP_ANGLE): # going up the ramp
+            #control.setSpeed(BASE_SPEED*ACCELERATE_RATE)
             print("accelerate")
-        elif (pitch < 0 and pitch < -1*RAITO_OF_ANGLE*RAMP_ANGLE): #going down the ramp
-            #control.setSpeed(CURRENT_SPEED*DECELERATE_RATE)
+        elif (pitch < 0 and pitch >= -1*RAITO_OF_ANGLE*RAMP_ANGLE): #going down the ramp
+            #control.setSpeed(BASE_SPEED*DECELERATE_RATE)
             print("decelerate")
         time.sleep(1)
 
