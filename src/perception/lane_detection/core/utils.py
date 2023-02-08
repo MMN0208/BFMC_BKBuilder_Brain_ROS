@@ -5,7 +5,14 @@ from const import *
 # from numba import float32, uint16
 
 ##################  TEST CONFIG #################################
-
+TESTNODES = dict()
+TESTNODES['BEV'] = np.random.randn(640, 360)    #   Bird eye view image 
+TESTNODES['STEER_ANGLE'] = 30.2                 #   Steering angle
+TESTNODES['RADIUS'] = 12.2                      #   Radius of curvature
+TESTNODES['OFF_CENTRE'] = 23.2                  #   Off center  
+TESTNODES['LLT'] = 0                            #   Left lane type
+TESTNODES['RLT'] = 1                            #   Right lane type
+TESTNODES['MIDPOINT'] = 320                     #   Mid point
 
 #####################   END TEST CONFIG  ########################
 
