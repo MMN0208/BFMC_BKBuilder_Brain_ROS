@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="input" type = "pedestrian_crosswalkNODE.py" name = "pedestrian_crosswalkNODE"      output="screen"/>
+    <node pkg="output" type = "testNODE.py"                name = "test_pedestrian_crosswalkNODE" output="screen"/>
+</launch>
