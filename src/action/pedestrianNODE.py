@@ -25,6 +25,12 @@ class pedestrianNODE():
     def check_pedestrian(self, msg):
         """Determined if a pedestrian is currently walking or not
         """
+        px, py, ph, pw = msg.x, msg.y, msg.h, msg.w
+        #self.midpoint = center of road
+        a, b, c, d = 0, 0, 0, 0 #
+        
+        #TODOS: Process and return is_pedestrian (bool)
+        
         
         pass
     
