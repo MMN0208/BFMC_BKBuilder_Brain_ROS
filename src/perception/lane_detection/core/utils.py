@@ -17,18 +17,18 @@ TESTNODES['MIDPOINT'] = 320                     #   Mid point
 #####################   END TEST CONFIG  ########################
 
 ##################  HELPER FUNCTIONS    ###########################
-# def extract_frames(video_path, NUM_FRAMES, OFFSET):
+def extract_frames(video_path, NUM_FRAMES, OFFSET):
 
-#     video = cv.VideoCapture(video_path)
-#     current_frame = 0
-#     while True:
-#         flag, frame = video.read()
+    video = cv.VideoCapture(video_path)
+    current_frame = 0
+    while True:
+        flag, frame = video.read()
 
-#         if flag and current_frame < NUM_FRAMES:
-#             cv.imwrite(IMG_DIR+ '/frame_'+str(current_frame+1) + '.png', frame)
-#             current_frame += OFFSET 
-#         else:
-#             break
+        if flag and current_frame < NUM_FRAMES:
+            cv.imwrite(IMG_DIR+ '/frame_'+str(current_frame+1) + '.png', frame)
+            current_frame += OFFSET 
+        else:
+            break
 
 def save_pkl(pickle_file, path):
     try:
@@ -77,6 +77,6 @@ class Trackbars:
         points = np.array([[wTop, hTop], [wTop, hTop], [wBot, hBot], [wBot, hBot]], dtype = np.float32)
 
         return points
-
+    
     def doNothing(self):
         pass

@@ -41,9 +41,9 @@ from utils.msg      import lane
 #import object detection
 import numpy as np
 import cv2
-#from src.perception.object_detection.network.edgetpumodel import EdgeTPUModel
-#from src.perception.object_detection.network.utils import plot_one_box, Colors, get_image_tensor
-#from src.perception.lane_detection.core.utils import TESTNODES
+from src.perception.object_detection.network.edgetpumodel import EdgeTPUModel
+from src.perception.object_detection.network.utils import plot_one_box, Colors, get_image_tensor
+from src.perception.lane_detection.core.utils import TESTNODES
 #import lane detection
 class perceptionNODE():
     def __init__(self):
@@ -86,16 +86,15 @@ class perceptionNODE():
             debugging when we try to send pseudo messages. Pseudo messages were defined in TESTNODES
             that was included in the source file (please visit src/perception/lane_detection/core/utils.py for more details of TESTNODES).
 
-        """má
+        """
               
         rospy.init_node('perceptionNODE', anonymous=False)
         
-        self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
-        self.command_publisher = rospy.Publisher("/automobile/perception", String, queue_size=1)
         #======CAMERA======
         self.bridge = CvBridge()
-        #self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
+        # self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
+
         #======OBJECT DETECTION======
         self.model_path = "src/perception/object_detection/weights/traffic.tflite"
         self.names = "src/perception/object_detection/data.yaml"
@@ -103,14 +102,13 @@ class perceptionNODE():
         self.iou_thresh = 0.65
         self.device = 0
         
-        #self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
-        self.model = None 
+        self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
         
         #self.colors = Colors()
-        #.
-        #=======LANE DETECTION======="""s
-        self.lane_publisher = rospy.Publisher("/automobile/lane",lane,queue_size =1)
         
+        #=======LANE DETECTION======="""s
+        self.lane_publisher = rospy.Publisher("/automobile/lane", String, queue_size =1)
+        self.bev_publisher = rospy.Publisher("/automobile/bev", Image, queue_size = 1)
         
     # ===================================== RUN ==========================================
     def run(self):
@@ -121,32 +119,32 @@ class perceptionNODE():
         rospy.spin()   
         #self._testNODE()        
     # ===================================== OBJECT DETECT ========================================
-    def _object(self, msg):
-        """Object detection callback
-        """
-        image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        output_image = image
-        full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
-        pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
-        #print(f"DetectionProcess{net_image.shape}")
-        det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
+    # def _object(self, msg):
+    #     """Object detection callback
+    #     """
+    #     image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+    #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #     output_image = image
+    #     full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
+    #     pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
+    #     #print(f"DetectionProcess{net_image.shape}")
+    #     det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
                 
                 
-        for *xyxy, conf, cls in reversed(det): #Process prediction loop
-            '''
-            xyxy (List): bounding box
-            conf (int): prediction percentage
-            cls (int): class index of prediction
-            '''
-            c = int(cls)  # integer class
-            label = f'{self.names[c]} {conf:.2f}' #Set label to the class detected
-            command = f'DETECT:{label}:{xyxy}'
-            self.command_publisher.publish(command)
-            #output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
+    #     for *xyxy, conf, cls in reversed(det): #Process prediction loop
+    #         '''
+    #         xyxy (List): bounding box
+    #         conf (int): prediction percentage
+    #         cls (int): class index of prediction
+    #         '''
+    #         c = int(cls)  # integer class
+    #         label = f'{self.names[c]} {conf:.2f}' #Set label to the class detected
+    #         command = f'DETECT:{label}:{xyxy}'
+    #         self.command_publisher.publish(command)
+    #         #output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
                     
-        tinference, tnms = self.model.get_last_inference_time()
-        print("Frame done in {}".format(tinference+tnms))
+    #     tinference, tnms = self.model.get_last_inference_time()
+    #     print("Frame done in {}".format(tinference+tnms))
      
     # ===================================== LANE DETECT ========================================
     
@@ -157,9 +155,18 @@ class perceptionNODE():
 
         Note: at this time just use pseudo messages defined in TESTNODES to test the publish() command
         """
-        image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        print(image.shape)
-        pass
+        msg = lane()
+        msg.steer_angle =   TESTNODES['STEER_ANGLE']
+        msg.radius_of_curvature = TESTNODES['RADIUS']
+        msg.off_centre = TESTNODES['OFF_CENTRE']
+        msg.left_lane_type = TESTNODES['LLT']
+        msg.left_lane_type = TESTNODES['RLT']
+        msg.midpoint = TESTNODES['MIDPOINT']
+        
+        while not rospy.is_shutdown():
+            self.lane_publisher.publish(msg)
+        
+
 
     def send_BEV(self, msg):
         """Birdeye view callback
@@ -167,7 +174,11 @@ class perceptionNODE():
         
         Note: at this time just use pseudo messages defined in TESTNODES to test the publish() command
         """
-        pass
+        image = TESTNODES['BEV']
+        print("Image to be send: {}".format(image))
+        send_image = self.bridge.cv2_to_imgmsg(image, 'bgr8')
+        while not rospy.is_shutdown():
+            self.bev_publisher.publish(send_image)
 
     # ===================================== READ ==========================================
     def _read(self):
