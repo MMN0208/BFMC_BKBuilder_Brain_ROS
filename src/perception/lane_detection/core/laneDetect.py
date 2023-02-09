@@ -160,6 +160,7 @@ class LaneDetection:
             nonzeroy = np.array(nonzero[0])
             nonzerox = np.array(nonzero[1])
             margin = 50
+
             left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy +
             left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) +
             left_fit[1]*nonzeroy + left_fit[2] + margin)))
@@ -174,12 +175,14 @@ class LaneDetection:
             righty = nonzeroy[right_lane_inds]
 
             #   Fit second order polynomial
-            left_fit = np.polyfit(lefty, leftx, 2)
-            right_fit = np.polyfit(righty, rightx, 2)
+            _left_fit = np.polyfit(lefty, leftx, 2)
+            _right_fit = np.polyfit(righty, rightx, 2)
+
+            print(_left_fit, _right_fit)
 
             ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0])
-            left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-            right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+            left_fitx = _left_fit[0]*ploty**2 + _left_fit[1]*ploty + _left_fit[2]
+            right_fitx = _right_fit[0]*ploty**2 + _right_fit[1]*ploty + _right_fit[2]
 
 
             ## VISUALIZATION ###########################################################
@@ -217,12 +220,8 @@ class LaneDetection:
             cv.polylines(out_img, [right], False, (1,1,0), thickness=5)
             cv.polylines(out_img, [left], False, (1,1,0), thickness=5)
             
-            ret = {}
-            # ret['leftx'] = leftx
-            # ret['rightx'] = rightx
-            # ret['left_fitx'] = left_fitx
-            # ret['right_fitx'] = right_fitx
-            # ret['ploty'] = ploty
+            ret = dict() 
+
             ret['out_img'] = out_img
             ret['left_lane_inds'] = left_lane_inds
             ret['right_lane_inds'] = right_lane_inds 

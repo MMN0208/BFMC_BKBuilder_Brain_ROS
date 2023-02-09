@@ -184,57 +184,55 @@ class Camera():
 
     def find_lanes(self, img):
 
-        try:
-            results = dict()
-            
-            if self.left_lane.detected and self.right_lane.detected:  # Perform margin search if exists prior success.
-            
-                # Margin Search
-                left_fit = self.left_lane.current_fit
-                right_fit = self.right_lane.current_fit       
-                margin_search_result = self.laneDetector.margin_search(img, left_fit, right_fit)
-                left_lane_inds = margin_search_result['left_lane_inds']
-                right_lane_inds = margin_search_result['right_lane_inds']
-                out_img = margin_search_result['out_image']
-                
-                # Update the lane detections
-                self.validate_lane_update(img, left_lane_inds, right_lane_inds)
-            
-            else:  
-                # Perform a full window search if no prior successful detections.
-                # Window Search
-                window_search_result = self.laneDetector.slide_window_search(img)
-                left_lane_inds = window_search_result['left_lane_inds']
-                right_lane_inds = window_search_result['right_lane_inds']
-                out_img = window_search_result['out_img']
-                # Update the lane detections
-                self.validate_lane_update(img, left_lane_inds, right_lane_inds)
-            
-            results['out_img'] = out_img
-            results['left_lane_inds'] = left_lane_inds
-            results['right_lane_inds'] = right_lane_inds
-            
-            return results 
+        results = dict()
+        out_img = None
+        left_lane_inds = []
+        right_lane_inds = []
+
+        if self.left_lane.detected and self.right_lane.detected:  # Perform margin search if exists prior success.
         
-        except Exception as e:
-            print(e)
-
-    def write_stats(self, img):
-        try:
-            font = cv.FONT_HERSHEY_PLAIN
-            size = 3
-            weight = 2
-            color = (255,255,255)
+            # Margin Search
+            left_fit = self.left_lane.current_fit
+            right_fit = self.right_lane.current_fit       
+            margin_search_result = self.laneDetector.margin_search(img, left_fit, right_fit)
+            left_lane_inds = margin_search_result['left_lane_inds']
+            right_lane_inds = margin_search_result['right_lane_inds']
+            out_img = margin_search_result['out_image']
             
-            radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
-            cv.putText(img,'Lane Curvature Radius: '+ '{0:.2f}'.format(radius_of_curvature)+'m',(30,60), font, size, color, weight)
+            # Update the lane detections
+            self.validate_lane_update(img, left_lane_inds, right_lane_inds)
+        else:  
+            # Perform a full window search if no prior successful detections.
+            # Window Search
+            window_search_result = self.laneDetector.slide_window_search(img)
+            left_lane_inds = window_search_result['left_lane_inds']
+            right_lane_inds = window_search_result['right_lane_inds']
+            out_img = window_search_result['out_img']
+            # Update the lane detections
+            self.validate_lane_update(img, left_lane_inds, right_lane_inds)
+        
+        results['out_img'] = out_img
+        results['left_lane_inds'] = left_lane_inds
+        results['right_lane_inds'] = right_lane_inds
+        
+        return results 
+        
+       
+    def write_stats(self, img):
+        
+        font = cv.FONT_HERSHEY_PLAIN
+        size = 3
+        weight = 2
+        color = (255,255,255)
+        
+        radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
+        cv.putText(img,'Lane Curvature Radius: '+ '{0:.2f}'.format(radius_of_curvature)+'m',(30,60), font, size, color, weight)
 
-            if (self.left_lane.line_base_pos >=0):
-                cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(self.left_lane.line_base_pos*100)+'cm'+ ' Right of Center',(30,100), font, size, color, weight)
-            else:
-                cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(abs(self.left_lane.line_base_pos)*100)+'cm' + ' Left of Center',(30,100), font, size, color, weight)
-        except Exception as e:
-            print(e)
+        if (self.left_lane.line_base_pos >=0):
+            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(self.left_lane.line_base_pos*100)+'cm'+ ' Right of Center',(30,100), font, size, color, weight)
+        else:
+            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(abs(self.left_lane.line_base_pos)*100)+'cm' + ' Left of Center',(30,100), font, size, color, weight)
+    
 
     def draw_lane(self, undist, img, Minv):
         # Generate x and y values for plotting
@@ -250,7 +248,7 @@ class Camera():
 
         if left_fit is not None and right_fit is not None:
             left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-            
+
             # Recast the x and y points into usable format for cv2.fillPoly()
             pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
             right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
@@ -267,67 +265,64 @@ class Camera():
             result = cv.addWeighted(undist, 1, newwarp, 1.3, 0)
             self.write_stats(result)
 
-
             return result
+
         return undist
 
     def generate_output(self, warped, threshold_img, polynomial_img, lane_img):
-        try:
 
-            print("Warped: {}\nThreshold: {}\nPoly: {}\nLane:{}".format(
-                warped.shape, threshold_img.shape, polynomial_img.shape, lane_img.shape
-            ))
-            fontScale=1
-            thickness=2
-            fontFace = cv.FONT_HERSHEY_PLAIN
-            out_img = np.zeros((720, 1280,3), np.uint8)
-            out_img[:360, :640, :] = lane_img
-            cv.putText(out_img, "Detection", (50, 100), fontFace, fontScale, (0,0,255), thickness, lineType = cv.LINE_AA)
-            
-            
-            # Perspective transform image
-            out_img[360:, :640:,:] = cv.resize(warped,(640, 360))
-            boxsize, _ = cv.getTextSize("Transformed", fontFace, fontScale, thickness)
-            cv.putText(out_img, "Transformed", (400, 400), fontFace, fontScale,(0,0,255), thickness,  lineType = cv.LINE_AA)
+        print("Warped: {}\nThreshold: {}\nPoly: {}\nLane:{}".format(
+            warped.shape, threshold_img.shape, polynomial_img.shape, lane_img.shape
+        ))
+        fontScale=1
+        thickness=2
+        fontFace = cv.FONT_HERSHEY_PLAIN
+        out_img = np.zeros((720, 1280,3), np.uint8)
+        out_img[:360, :640, :] = lane_img
+        cv.putText(out_img, "Detection", (50, 100), fontFace, fontScale, (0,0,255), thickness, lineType = cv.LINE_AA)
         
-            # Threshold image
-            resized = cv.resize(threshold_img,(640, 360))
-            resized=np.uint8(resized)
-            gray_image = cv.cvtColor(resized*255, cv.COLOR_GRAY2RGB)
-            out_img[:360, 640:, :] = cv.resize(gray_image,(640, 360))
-            boxsize, _ = cv.getTextSize("Filtered", fontFace, fontScale, thickness)
-            cv.putText(out_img, "Filtered", (100, 700), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
         
-            # Polynomial lines
-            out_img[360:, 640:, :] = cv.resize(polynomial_img,(640, 360))
-            boxsize, _ = cv.getTextSize("Detected Lanes", fontFace, fontScale, thickness)
-            cv.putText(out_img, "Detected Lanes", (int(1494-boxsize[0]/2),521), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
-            
-            return out_img 
+        # Perspective transform image
+        out_img[360:, :640:,:] = cv.resize(warped,(640, 360))
+        boxsize, _ = cv.getTextSize("Transformed", fontFace, fontScale, thickness)
+        cv.putText(out_img, "Transformed", (400, 400), fontFace, fontScale,(0,0,255), thickness,  lineType = cv.LINE_AA)
+    
+        # Threshold image
+        resized = cv.resize(threshold_img,(640, 360))
+        resized=np.uint8(resized)
+        gray_image = cv.cvtColor(resized*255, cv.COLOR_GRAY2RGB)
+        out_img[:360, 640:, :] = cv.resize(gray_image,(640, 360))
+        boxsize, _ = cv.getTextSize("Filtered", fontFace, fontScale, thickness)
+        cv.putText(out_img, "Filtered", (100, 700), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
+    
+        # Polynomial lines
+        out_img[360:, 640:, :] = cv.resize(polynomial_img,(640, 360))
+        boxsize, _ = cv.getTextSize("Detected Lanes", fontFace, fontScale, thickness)
+        cv.putText(out_img, "Detected Lanes", (int(1494-boxsize[0]/2),521), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
         
-        except Exception as e:
-            print(e)
-
+        return out_img 
+    
     def _runDetectLane(self, img):
-        try:
-            preprocess_results= self.laneDetector.processor.process(img)
-            warped = preprocess_results['birdeye_img']
-            thresh = preprocess_results['thresh']
-            inverse_transform = preprocess_results['inverse_transform']
 
-            output_img = self.find_lanes(thresh)['out_img']
-            lane_img = self.draw_lane(img, thresh, inverse_transform)
-            finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
+        preprocess_results= self.laneDetector.processor.process(img)
+        warped = preprocess_results['birdeye_img']
+        thresh = preprocess_results['thresh']
+        inverse_transform = preprocess_results['inverse_transform']
 
-            """Testing"""
 
-            test_results = dict()
-            test_results['out_img'] = output_img
-            test_results['lane_img'] = lane_img
-            test_results['finalImg'] = finalImg
+        find_lane_result = self.find_lanes(thresh)
+        output_img = find_lane_result['output_img']
+        print("Here")
+        lane_img = self.draw_lane(img, thresh, inverse_transform)
+        finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
 
-            return test_results
+        """Testing"""
+
+        test_results = dict()
+        test_results['out_img'] = output_img
+        test_results['lane_img'] = lane_img
+        test_results['finalImg'] = finalImg
+
+        return test_results
             # return finalImg
         
-        except Exception as e :
-            print(e)

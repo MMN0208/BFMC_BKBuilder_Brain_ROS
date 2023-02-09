@@ -45,14 +45,15 @@ if __name__ == '__main__':
         try:
             flag, frame = video.read()
             if flag:
-                print("Read frame")
 
                 #   ====================    MAIN FLOW   =====================
                 frame = cv.resize(frame, IMG_SIZE)
                 calibrate_img = camera.undistort(frame)
                 # detection_img= camera._runDetectLane(calibrate_img)
-                detection_results = camera._runDetectLane(calibrate_img)    # TEST
-                cv.imshow("Detection", detection_results['lane_img'])
+                detection_results = camera._runDetectLane(calibrate_img)    #   TEST
+                plottable = detection_results['lane_img']
+                
+                cv.imshow("Detection", plottable)                           #TEST
                 ######################### TESTING   #########################
                 # output = camera.laneDetector.processor.process(calibrate_img)
                 # thresh = output['thresh']
