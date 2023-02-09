@@ -16,10 +16,10 @@ params_processing['sobel_kernel_size'] = 3
 params_processing['lower_white'] = np.array([0, 160, 10])
 params_processing['upper_white'] = np.array([255, 255, 255])
 params_processing['src_points'] = np.array([ \
-                                        [5, 340], [635, 340], [486, 145], [214, 121]  \
+                                        [0, 300], [640, 300], [550, 50], [0, 50]  \
                                             ], dtype = np.float32)
 params_processing['dst_points'] = np.array([\
-                                             [5, 340], [635, 340], [635, 0], [5, 0] \
+                                             [0, 10], [600, 10], [600, 0], [10, 0] \
                                              ], dtype = np.float32)
 """ ======================= LANE DETECTION  ======================================"""
 params_lane_detection['ym_per_pix'] = 20.0 / 360.0

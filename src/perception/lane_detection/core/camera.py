@@ -197,7 +197,7 @@ class Camera():
             margin_search_result = self.laneDetector.margin_search(img, left_fit, right_fit)
             left_lane_inds = margin_search_result['left_lane_inds']
             right_lane_inds = margin_search_result['right_lane_inds']
-            out_img = margin_search_result['out_image']
+            out_img = margin_search_result['out_img']
             
             # Update the lane detections
             self.validate_lane_update(img, left_lane_inds, right_lane_inds)
@@ -311,7 +311,7 @@ class Camera():
 
 
         find_lane_result = self.find_lanes(thresh)
-        output_img = find_lane_result['output_img']
+        output_img = find_lane_result['out_img']
         print("Here")
         lane_img = self.draw_lane(img, thresh, inverse_transform)
         finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
