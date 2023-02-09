@@ -1,0 +1,4 @@
+<launch>    
+    <node pkg="perception" type="perceptionNODE.py" 	name="perceptionNODE"  		output="screen"/>
+    <node pkg="perception" type="testPerceptionNODE.py" name="testPerceptionNODE"   output="screen"/>
+</launch>

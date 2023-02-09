@@ -31,12 +31,17 @@
 import io
 import numpy as np
 import time
-
+import os
+import glob
 import rospy
+<<<<<<< HEAD
+import cv2
+=======
 
 import glob
 import cv2
 
+>>>>>>> 6e2f0fb92e01ded13bf6d2d95e3f93d896ac80fa
 from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
 
@@ -48,7 +53,11 @@ class cameraSpooferNODE():
         # params
         self.videoSize = (640,480)
         
+<<<<<<< HEAD
+        self.videoDir = "/"
+=======
         self.videoDir = "src/input/src/cameraHandler/"
+>>>>>>> 6e2f0fb92e01ded13bf6d2d95e3f93d896ac80fa
         self.videos = self.open_files(self.videoDir, ext = ext)
         
         rospy.init_node('cameraSpooferNODE', anonymous=False)
@@ -67,7 +76,6 @@ class cameraSpooferNODE():
     def open_files(self, inputDir, ext):
         """Open all files with the given path and extension
         """
-        
         files =  glob.glob(inputDir + '/*' + ext)  
         return files
 

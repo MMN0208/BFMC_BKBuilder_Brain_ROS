@@ -79,6 +79,107 @@ class actionNODE:
         self.init = 1
         self.start_signal = 0
         self.traffic_sign = NO_SIGN
+<<<<<<< HEAD
+        
+        self.main_process()
+        
+    def traffic_sign_check(self, msg):
+        if msg.data == "STOP_SIGN":
+            self.traffic_sign = TrafficSign.STOP_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "PARKING_SIGN":
+            self.traffic_sign = TrafficSign.PARKING_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "CROSS_WALK":
+            self.traffic_sign = TrafficSign.CROSS_WALK
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "PRIORITY_SIGN":
+            self.traffic_sign = TrafficSign.PRIORITY_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "HIGHWAY_ENTRANCE_SIGN"
+            self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "HIGHWAY_EXIT_SIGN"
+            self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "ROUNDABOUND_SIGN"
+            self.traffic_sign = TrafficSign.ROUNDABOUND_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "ONE_WAY_SIGN"
+            self.traffic_sign = TrafficSign.ONE_WAY_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        elif msg.data == "NO_ENTRY_SIGN"
+            self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
+            if run_state==RUNNING:
+                self.run_state = RunStates.WAIT
+        
+    def wait_action(self):
+        if 
+    def auto_control(self):
+        if testRUNING:
+            if self.run_state == RunStates.RUNNING:
+        if testWAITING:
+            if self.run_state == RunStates.WAIT:
+                self.wait_action()
+            
+        
+    def run(self):
+        while not rospy.is_shutdown() and start: 
+            while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
+                print("Waiting for start signal")
+            if(self.state == State.NOT_RUNNING):
+                print("DOING NOTHING")
+            elif(self.state == State.RUNNING):
+                auto_control()
+if __name__ == "__main__":
+    action_node = actionNODE()
+    action_node.run()
+    #         while not rospy.is_shutdown() and start: 
+    #             while not start: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
+    #                 print("Waiting for green")        
+    #             if(self.state == State.NOT_RUNNING):
+    #                 print("DOING NOTHING")
+    #             elif(self.state == State.RUNNING):
+    #                 auto_control()       
+    
+    # def check_trafficlight(self, msg):
+    #     if GREEN_LIGHT:
+    #         if self.init == 1:
+    #             self.start = 1 #bien start chi duoc dung mot lan
+    #             self.init = 0
+    #             self.state = State.RUNNING
+    # def check_state2(self, msg):
+    #     pass
+    
+    # def imu_check(self,msg):
+    #     # neu gap doc thi doi state thanh len doc
+    #     # neu xuong doc thi doi state thanh xuong doc
+        
+    # def object_check(self,msg):
+        
+    # def traffic_check(self,msg):
+    
+    # def lane_check(self, msg): # neu xe qua lech do voi duong dang di => return goc steer
+    #     # xu ly xe di trong nay
+    #     # gui toc do + goc lai
+    #     # tinh toan gi do de self.angle and self.speed
+    #     # state machine se duoc xu ly o day
+    #     # if state == len doc hoac xuong doc: xu ly toc do
+
+    # def check_server(self, msg):
+    #     # xu ly tin hieu overtake static car
+    #     # xu ly tin hieu dung xe
+    #     # xu ly tin hieu den xanh den do
+        
+=======
         self.unlock = 1
         self.main_process()
         
@@ -198,6 +299,7 @@ if __name__ == "__main__":
     #     # xu ly tin hieu dung xe
     #     # xu ly tin hieu den xanh den do
         
+>>>>>>> 6e2f0fb92e01ded13bf6d2d95e3f93d896ac80fa
     # def auto_control(self): # chi de check state machine
     #     if self.run_state == RunStates.GO_STRAIGHT:
     #         if gap nguoi di bo:

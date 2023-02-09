@@ -33,16 +33,17 @@ import json
 import time
 import rospy
 
-from std_msgs.msg      import String, Image
+from std_msgs.msg      import String
+from sensor_msgs.msg import Image
 from utils.srv        import subscribing, subscribingResponse
 from cv_bridge       import CvBridge
-
+from utils.msg      import lane
 #import object detection
 import numpy as np
 import cv2
-from src.perception.object_detection.network.edgetpumodel import EdgeTPUModel
-from src.perception.object_detection.network.utils import plot_one_box, Colors, get_image_tensor
-from src.perception.lane_detection.core.utils import TESTNODES
+#from src.perception.object_detection.network.edgetpumodel import EdgeTPUModel
+#from src.perception.object_detection.network.utils import plot_one_box, Colors, get_image_tensor
+#from src.perception.lane_detection.core.utils import TESTNODES
 #import lane detection
 class perceptionNODE():
     def __init__(self):
@@ -88,8 +89,8 @@ class perceptionNODE():
         """má
               
         rospy.init_node('perceptionNODE', anonymous=False)
-        
-        # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
+        """
+        self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
         self.command_publisher = rospy.Publisher("automobile/perception", String)
         #======CAMERA======
         self.bridge = CvBridge()
@@ -107,6 +108,9 @@ class perceptionNODE():
         
         self.colors = Colors()
         #.
+        #=======LANE DETECTION======="""
+        self.lane_publisher = rospy.Publisher("automobile/lane",lane,queue_size =1)
+        
         
     # ===================================== RUN ==========================================
     def run(self):
@@ -114,8 +118,8 @@ class perceptionNODE():
         """
         rospy.loginfo("starting perceptionNODE")
         #self._read() 
-        rospy.spin()   
-    
+        #rospy.spin()   
+        self._testNODE()        
     # ===================================== OBJECT DETECT ========================================
     def _object(self, msg):
         """Object detection callback
@@ -181,7 +185,16 @@ class perceptionNODE():
         command = json.loads(msg.data)
         #command = msg.data
         print(command)
-            
+    def _testNODE(self):
+        msg = lane()
+        msg.steer_angle = 30.2
+        msg.radius_of_curvature = 12.2
+        msg.off_centre = 23.2
+        msg.left_lane_type = 0
+        msg.left_lane_type = 1
+        msg.midpoint = 10
+        while not rospy.is_shutdown():
+            self.lane_publisher.publish(msg)
 if __name__ == "__main__":
     perNod = perceptionNODE()
     perNod.run()

@@ -52,6 +52,7 @@ add_message_files(
   localisation.msg
   vehicles.msg
   environmental.msg
+  lane.msg
 )
 
 ## Generate services in the 'srv' folder
