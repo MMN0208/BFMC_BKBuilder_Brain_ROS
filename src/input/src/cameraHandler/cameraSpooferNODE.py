@@ -34,14 +34,10 @@ import time
 import os
 import glob
 import rospy
-<<<<<<< HEAD
-import cv2
-=======
 
 import glob
 import cv2
 
->>>>>>> 6e2f0fb92e01ded13bf6d2d95e3f93d896ac80fa
 from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
 
@@ -53,11 +49,7 @@ class cameraSpooferNODE():
         # params
         self.videoSize = (640,480)
         
-<<<<<<< HEAD
-        self.videoDir = "/"
-=======
-        self.videoDir = "src/input/src/cameraHandler/"
->>>>>>> 6e2f0fb92e01ded13bf6d2d95e3f93d896ac80fa
+        self.videoDir = "/home/BFMC_BKBuilder_Brain_ROS/"
         self.videos = self.open_files(self.videoDir, ext = ext)
         
         rospy.init_node('cameraSpooferNODE', anonymous=False)
