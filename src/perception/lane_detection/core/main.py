@@ -1,6 +1,7 @@
 import cv2 as cv
 from preprocess import Preprocessor
 from laneDetect import LaneDetection
+from camera import Camera
 from utils import *
 from const import *
 import glob
@@ -30,44 +31,43 @@ if __name__ == '__main__':
 
     # extract_frames(VIDEO_PATH, NUM_FRAMES, OFFSET)
 
-    preprocessor = Preprocessor()
-    lanedetector = LaneDetection()
+    # preprocessor = Preprocessor()
+    # lanedetector = LaneDetection()
 
     #   Load video for testing
     video = cv.VideoCapture(VIDEO_PATH)
     video.set(cv.CAP_PROP_FPS, 10)
-#    camera = Camera()
-#   camera.load_calibrate_info(CALIBRATE_PICKLE)
+    camera = Camera()
+    camera.load_calibrate_info(CALIBRATE_PICKLE)
     
 
     while True:
         try:
             flag, frame = video.read()
             if flag:
+                print("Read frame")
+
+                #   ====================    MAIN FLOW   =====================
                 frame = cv.resize(frame, IMG_SIZE)
-#                detection_img= camera._runDetectLane(calibrate_img)
-                output = preprocessor.process(frame)
-                tmp = output['thresh']
-                _out_test = lanedetector.slide_window_search(tmp)
-                out_test = _out_test['out_img']
+                calibrate_img = camera.undistort(frame)
+                # detection_img= camera._runDetectLane(calibrate_img)
+                detection_results = camera._runDetectLane(calibrate_img)    # TEST
+                cv.imshow("Detection", detection_results['lane_img'])
                 ######################### TESTING   #########################
-#               output = camera.laneDetector.processor.process(calibrate_img)
-#                thresh = output['thresh']
-#                points_img = draw_points(frame, output['birdeye']['src'])
+                # output = camera.laneDetector.processor.process(calibrate_img)
+                # thresh = output['thresh']
                 
                 # cv.imshow('points', points_img)
                 # cv.imshow('Thresh', thresh)
                 # cv.imshow('Detection', detection_img)
                 #############################################################
                 # cv.imshow('Main', output['birdeye']['birdeye'])
-                cv.imshow("Test", out_test)
-                cv.imshow("Thresh", tmp)
+                # cv.imshow("Test", out_test)
+                # cv.imshow("Thresh", tmp)
                 cv.waitKey(1)
         except Exception as e:
             print(e)
     
     
-    video.release()
-    cv.destroyAllWindows()
    
 

@@ -95,13 +95,9 @@ class Preprocessor:
 
     def warpImg(self, img):
 
-        H = img.shape[0]
-        W = img.shape[1]
-#        wTop = 82 
-#        hTop = 170 
-#        wBot = 20 
-#        hBot = 312 
+        
         birdeyeView = dict()
+        H, W, C = img.shape
 
         src = params_processing['src_points']
         dst = params_processing['dst_points']
@@ -122,20 +118,32 @@ class Preprocessor:
         return birdeyeView, transform_view, inverse_transform_view
 
     def process(self, img):
-        print(img.shape)        
+        """Preproces pipeline
+
+        args: raw image of scene
+        pipeline: warpImage -> gray -> thresh -> blur -> canny
+        return: dictionary : {
+            key: value
+            "birdeye_img" :         binary threshold bird eye view
+            "transform_view":       transform matrix to new perspective
+            "inverse_transform":    inverse to original perspective
+            "thresh":               binary threshold of original perspective
+            "canny":                
+        }
+        """        
         results = dict()
         H, W, C = img.shape
         assert (H == IMG_SIZE[1]), "Size of scene is not compatible. Expected {} but got {}".format(IMG_SIZE[1], H)
-        birdeyeView, transformed_view, invMatrixTransform = self.warpImg(img)
 
+        birdeyeView, transformed_view, invMatrixTransform = self.warpImg(img)
         hsl_bin = self.hls_threshold(birdeyeView['birdeye'])
         mask = cv.inRange(birdeyeView['birdeye'], self.lower_white, self.upper_white)
         hls_bin = cv.bitwise_and(birdeyeView['birdeye'], birdeyeView['birdeye'], mask=mask)
-
         gray = self.grey_scale(hls_bin)
         _, thresh = cv.threshold(gray, 150, 255, cv.THRESH_BINARY)
         blur = cv.GaussianBlur(thresh, (3, 3), 0)
         canny = cv.Canny(blur, 40, 60)
+
 
         results['birdeye_img'] = birdeyeView['birdeye']
         results["birdeye"] = birdeyeView 

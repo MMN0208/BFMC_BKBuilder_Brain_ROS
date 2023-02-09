@@ -85,7 +85,7 @@ class perceptionNODE():
             debugging when we try to send pseudo messages. Pseudo messages were defined in TESTNODES
             that was included in the source file (please visit src/perception/lane_detection/core/utils.py for more details of TESTNODES).
 
-        """
+        """má
               
         rospy.init_node('perceptionNODE', anonymous=False)
         

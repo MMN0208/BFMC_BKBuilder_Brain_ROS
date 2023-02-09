@@ -57,30 +57,31 @@ class LaneDetection:
 
     def slide_window_search(self, binary_warped):
         try:
-            H,W = binary_warped.shape
+
+            H, W = binary_warped.shape
             histogram = np.sum(binary_warped[binary_warped.shape[0] // 2:, :], axis = 0)
-            # Find the start of left and right lane lines using histogram info
+           
+           # Find the start of left and right lane lines using histogram info
             out_img = np.dstack((binary_warped, binary_warped, binary_warped)) * 255
             midpoint = int(histogram.shape[0] / 2)
             
-
-            
             # A total of 9 windows will be used
+            # edge margin is 50 pixels
             nwindows = 9
-            window_height = np.int8(binary_warped.shape[0] / nwindows)
-            nonzero = binary_warped.nonzero()
+            window_height = np.int8( H / nwindows  )
+            margin = 50
+            minpix = 5 
             
-            print(nonzero)
+            nonzero = binary_warped.nonzero()
             nonzeroy = np.array(nonzero[0])
             nonzerox = np.array(nonzero[1])
 
-            margin = 50
-            minpix = 5 
+
             left_lane_inds = []
             right_lane_inds = []
-
-            leftx_base = max(0, midpoint- margin)
-            rightx_base = max(W - 5, midpoint + margin)
+            
+            leftx_base = np.argmax(histogram[:midpoint])
+            rightx_base = np.argmax(histogram[midpoint:]) + midpoint
             leftx_current = leftx_base
             rightx_current = rightx_base
             
@@ -88,19 +89,21 @@ class LaneDetection:
 
             #### START - Loop to iterate through windows and search for lane lines #####
             for window in range(nwindows):
-                win_y_high  = binary_warped.shape[0] - (window + 1) * window_height
-                win_y_low   = binary_warped.shape[0] - window * window_height
+                win_y_low   = binary_warped.shape[0] - (window + 1) * window_height
+                win_y_high  = binary_warped.shape[0] - window * window_height
                 win_xleft_low = leftx_current - margin
                 win_xleft_high = leftx_current + margin
                 win_xright_low = rightx_current - margin
                 win_xright_high = rightx_current + margin
+
                 cv.rectangle(out_img, (win_xleft_low, win_y_low), (win_xleft_high, win_y_high),
                 (0,255,0), 2)
                 cv.rectangle(out_img, (win_xright_low,win_y_low), (win_xright_high,win_y_high),
                 (0,255,0), 2)
-                good_left_inds = ((nonzeroy <= win_y_low) & (nonzeroy > win_y_high) &
+                
+                good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) &
                 (nonzerox >= win_xleft_low) &  (nonzerox < win_xleft_high)).nonzero()[0]
-                good_right_inds = ((nonzeroy <= win_y_low) & (nonzeroy > win_y_high) &
+                good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) &
                 (nonzerox >= win_xright_low) &  (nonzerox < win_xright_high)).nonzero()[0]
 
                 left_lane_inds.append(good_left_inds)
@@ -112,15 +115,38 @@ class LaneDetection:
                     rightx_current = np.int8(np.mean(nonzerox[good_right_inds]))
             #### END - Loop to iterate through windows and search for lane lines #######
 
+            #   Concat the array of indices
             left_lane_inds = np.concatenate(left_lane_inds)
             right_lane_inds = np.concatenate(right_lane_inds)
             
+            #   Extract left and right line pixel positions
+            leftx = nonzerox[left_lane_inds]
+            lefty = nonzeroy[left_lane_inds]
+            rightx = nonzerox[right_lane_inds]
+            righty = nonzeroy[right_lane_inds]
+
+            #   Fit a second order polynomial to each 
+            left_fit = np.polyfit(lefty, leftx, 2)
+            right_fit = np.polyfit(righty, rightx, 2)
+
+            #   Generate x and y values for plotting
+            ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
+            left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+            right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+
+            #   Visualization
             out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
             out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-            
+
+            #   Draw line on image
+            right = np.asarray(tuple(zip(right_fitx, ploty)), np.int32) 
+            left = np.asarray(tuple(zip(left_fitx, ploty)), np.int32)
+            cv.polylines(out_img, [right], False, (1,1,0), thickness=4)
+            cv.polylines(out_img, [left], False, (1,1,0), thickness=4)
+
             result = dict()
-            result['left_lane_inds'] = leftx_current
-            result['right_lane_inds'] = rightx_current 
+            result['left_lane_inds'] = left_lane_inds 
+            result['right_lane_inds'] = right_lane_inds 
             result['out_img'] = out_img
             
             return result
@@ -192,12 +218,12 @@ class LaneDetection:
             cv.polylines(out_img, [left], False, (1,1,0), thickness=5)
             
             ret = {}
-            ret['leftx'] = leftx
-            ret['rightx'] = rightx
-            ret['left_fitx'] = left_fitx
-            ret['right_fitx'] = right_fitx
-            ret['ploty'] = ploty
-            ret['result'] = out_img
+            # ret['leftx'] = leftx
+            # ret['rightx'] = rightx
+            # ret['left_fitx'] = left_fitx
+            # ret['right_fitx'] = right_fitx
+            # ret['ploty'] = ploty
+            ret['out_img'] = out_img
             ret['left_lane_inds'] = left_lane_inds
             ret['right_lane_inds'] = right_lane_inds 
 
@@ -291,4 +317,5 @@ class LaneDetection:
         cv.putText(img, deviation_text, (50, 200), cv.FONT_HERSHEY_TRIPLEX, 0.8, (0,100, 200), 2, cv.LINE_AA)
 
         return img
+
 

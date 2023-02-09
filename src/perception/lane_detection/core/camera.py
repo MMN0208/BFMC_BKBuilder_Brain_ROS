@@ -1,7 +1,8 @@
 import cv2 as cv
 import numpy as np
 # import matplotlib.pyplot as plt
-from .utils import SAVE_DIR, IMG_DIR, save_pkl, load_pkl
+from const import SAVE_DIR
+from utils import load_pkl, save_pkl
 from laneDetect import LaneDetection
 from collections import deque
 
@@ -127,10 +128,10 @@ class Camera():
             right_line_allx = nonzerox[right_lane_inds]
             right_line_ally = nonzeroy[right_lane_inds]
 
-            print(left_line_allx) 
+            print("Left and right all x: {} {}".format(left_line_allx, right_line_allx)) 
             # Discard lane detections that have very little points, 
             # as they tend to have unstable results in most cases
-            if (left_line_allx) <= 1800 or (right_line_allx) <= 1800:
+            if len(left_line_allx) <= 500 or len(right_line_allx) <= 500:
                 self.left_lane.detected = False
                 self.right_lane.detected = False
                 return
@@ -140,13 +141,13 @@ class Camera():
             lane_width = np.subtract(right_x_mean, left_x_mean)
             
             # Discard the detections if lanes are not in their repective half of their screens
-            if left_x_mean > 740 or right_x_mean < 740:
+            if left_x_mean > 300 or right_x_mean < 300:
                 self.left_lane.detected = False
                 self.right_lane.detected = False
                 return
             
             # Discard the detections if the lane width is too large or too small
-            if  lane_width < 300 or lane_width > 800:
+            if  lane_width < 300 or lane_width > 640:
                 self.left_lane.detected = False
                 self.right_lane.detected = False
                 return 
@@ -154,11 +155,14 @@ class Camera():
             # If this is the first detection or 
             # the detection is within the margin of the averaged n last lines 
             if self.left_lane.bestx is None or np.abs(np.subtract(self.left_lane.bestx, np.mean(left_line_allx, axis=0))) < 100:
+                # print("Update left lane")
                 self.left_lane.update_lane(left_line_ally, left_line_allx)
                 self.left_lane.detected = True
             else:
                 self.left_lane.detected = False
+
             if self.right_lane.bestx is None or np.abs(np.subtract(self.right_lane.bestx, np.mean(right_line_allx, axis=0))) < 100:
+                # print("Update right lane")
                 self.right_lane.update_lane(right_line_ally, right_line_allx)
                 self.right_lane.detected = True
             else:
@@ -191,7 +195,7 @@ class Camera():
                 margin_search_result = self.laneDetector.margin_search(img, left_fit, right_fit)
                 left_lane_inds = margin_search_result['left_lane_inds']
                 right_lane_inds = margin_search_result['right_lane_inds']
-                out_img = margin_search_result['result']
+                out_img = margin_search_result['out_image']
                 
                 # Update the lane detections
                 self.validate_lane_update(img, left_lane_inds, right_lane_inds)
@@ -241,7 +245,9 @@ class Camera():
 
         left_fit = self.left_lane.best_fit
         right_fit = self.right_lane.best_fit
-        print(left_fit, right_fit) 
+        
+        print("Left fit and right fit when draw lines: {} {}".format(left_fit, right_fit))
+
         if left_fit is not None and right_fit is not None:
             left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
             
@@ -261,13 +267,18 @@ class Camera():
             result = cv.addWeighted(undist, 1, newwarp, 1.3, 0)
             self.write_stats(result)
 
+
             return result
         return undist
 
     def generate_output(self, warped, threshold_img, polynomial_img, lane_img):
         try:
+
+            print("Warped: {}\nThreshold: {}\nPoly: {}\nLane:{}".format(
+                warped.shape, threshold_img.shape, polynomial_img.shape, lane_img.shape
+            ))
             fontScale=1
-            thickness=1
+            thickness=2
             fontFace = cv.FONT_HERSHEY_PLAIN
             out_img = np.zeros((720, 1280,3), np.uint8)
             out_img[:360, :640, :] = lane_img
@@ -277,7 +288,7 @@ class Camera():
             # Perspective transform image
             out_img[360:, :640:,:] = cv.resize(warped,(640, 360))
             boxsize, _ = cv.getTextSize("Transformed", fontFace, fontScale, thickness)
-            cv.putText(out_img, "Transformed", (int(1494-boxsize[0]/2),40), fontFace, fontScale,(0,0,255), thickness,  lineType = cv.LINE_AA)
+            cv.putText(out_img, "Transformed", (400, 400), fontFace, fontScale,(0,0,255), thickness,  lineType = cv.LINE_AA)
         
             # Threshold image
             resized = cv.resize(threshold_img,(640, 360))
@@ -285,10 +296,10 @@ class Camera():
             gray_image = cv.cvtColor(resized*255, cv.COLOR_GRAY2RGB)
             out_img[:360, 640:, :] = cv.resize(gray_image,(640, 360))
             boxsize, _ = cv.getTextSize("Filtered", fontFace, fontScale, thickness)
-            cv.putText(out_img, "Filtered", (int(1494-boxsize[0]/2),281), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
+            cv.putText(out_img, "Filtered", (100, 700), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
         
             # Polynomial lines
-            out_img[360:, 640:, :] = cv.resize(polynomial_img*255,(640, 360))
+            out_img[360:, 640:, :] = cv.resize(polynomial_img,(640, 360))
             boxsize, _ = cv.getTextSize("Detected Lanes", fontFace, fontScale, thickness)
             cv.putText(out_img, "Detected Lanes", (int(1494-boxsize[0]/2),521), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
             
@@ -299,16 +310,24 @@ class Camera():
 
     def _runDetectLane(self, img):
         try:
-            preprocess_reulsts = self.laneDetector.processor.process(img)
-            warped = preprocess_reulsts['birdeye']['birdeye']
-            thresh = preprocess_reulsts['thresh']
-            inverse_transform = preprocess_reulsts['inverse_transform']
+            preprocess_results= self.laneDetector.processor.process(img)
+            warped = preprocess_results['birdeye_img']
+            thresh = preprocess_results['thresh']
+            inverse_transform = preprocess_results['inverse_transform']
 
             output_img = self.find_lanes(thresh)['out_img']
             lane_img = self.draw_lane(img, thresh, inverse_transform)
             finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
 
-            return finalImg
+            """Testing"""
+
+            test_results = dict()
+            test_results['out_img'] = output_img
+            test_results['lane_img'] = lane_img
+            test_results['finalImg'] = finalImg
+
+            return test_results
+            # return finalImg
         
         except Exception as e :
             print(e)
