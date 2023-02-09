@@ -89,12 +89,12 @@ class perceptionNODE():
         """
               
         rospy.init_node('perceptionNODE', anonymous=False)
-        """
+        
         self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
-        self.command_publisher = rospy.Publisher("automobile/perception", String)
+        self.command_publisher = rospy.Publisher("/automobile/perception", String, queue_size=1)
         #======CAMERA======
         self.bridge = CvBridge()
-        self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
+        #self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
         #======OBJECT DETECTION======
         self.model_path = "src/perception/object_detection/weights/traffic.tflite"
@@ -103,13 +103,13 @@ class perceptionNODE():
         self.iou_thresh = 0.65
         self.device = 0
         
-        self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
-        #self.model = None 
+        #self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
+        self.model = None 
         
-        self.colors = Colors()
+        #self.colors = Colors()
         #.
-        #=======LANE DETECTION======="""
-        self.lane_publisher = rospy.Publisher("automobile/lane",lane,queue_size =1)
+        #=======LANE DETECTION======="""s
+        self.lane_publisher = rospy.Publisher("/automobile/lane",lane,queue_size =1)
         
         
     # ===================================== RUN ==========================================
@@ -118,8 +118,8 @@ class perceptionNODE():
         """
         rospy.loginfo("starting perceptionNODE")
         #self._read() 
-        #rospy.spin()   
-        self._testNODE()        
+        rospy.spin()   
+        #self._testNODE()        
     # ===================================== OBJECT DETECT ========================================
     def _object(self, msg):
         """Object detection callback
@@ -157,6 +157,8 @@ class perceptionNODE():
 
         Note: at this time just use pseudo messages defined in TESTNODES to test the publish() command
         """
+        image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        print(image.shape)
         pass
 
     def send_BEV(self, msg):
