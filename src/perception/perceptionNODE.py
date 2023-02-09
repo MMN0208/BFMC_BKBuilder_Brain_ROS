@@ -92,8 +92,9 @@ class perceptionNODE():
         """
         self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
         self.command_publisher = rospy.Publisher("automobile/perception", String)
-        #======CAMERA======
+        #======CAMERA======"""
         self.bridge = CvBridge()
+        """
         self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
         #======OBJECT DETECTION======
@@ -109,8 +110,8 @@ class perceptionNODE():
         self.colors = Colors()
         #.
         #=======LANE DETECTION======="""
-        self.lane_publisher = rospy.Publisher("automobile/lane",lane,queue_size =1)
-        
+        #self.lane_publisher = rospy.Publisher("automobile/lane",lane,queue_size =1)
+        self.BEV_publisher = rospy.Publisher("automobile/birdeyes_view",Image,queue_size = 1)
         
     # ===================================== RUN ==========================================
     def run(self):
@@ -186,15 +187,10 @@ class perceptionNODE():
         #command = msg.data
         print(command)
     def _testNODE(self):
-        msg = lane()
-        msg.steer_angle = 30.2
-        msg.radius_of_curvature = 12.2
-        msg.off_centre = 23.2
-        msg.left_lane_type = 0
-        msg.left_lane_type = 1
-        msg.midpoint = 10
+        image = cv2.imread("/test.jpg")
+        send_image = self.bridge.cv2_to_imgmsg(image,"bgr8")
         while not rospy.is_shutdown():
-            self.lane_publisher.publish(msg)
+            self.BEV_publisher.publish(send_image)
 if __name__ == "__main__":
     perNod = perceptionNODE()
     perNod.run()
