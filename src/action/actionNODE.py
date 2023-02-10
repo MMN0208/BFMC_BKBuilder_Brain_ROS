@@ -14,7 +14,7 @@ from enum import Enum
 from control import controlNODE
 
 # =============================== CONFIG =================================================
-testRUNING          =  True
+testRUNNING         =  True
 testWAITING         =  True 
 
 class State(Enum):
@@ -151,7 +151,7 @@ class actionNODE:
             self.lock_state(RunStates.RUNNING)
             
     def auto_control(self):
-        if testRUNING:
+        if testRUNNING:
             if self.run_state == RunStates.RUNNING:
         if testWAITING:
             if self.run_state == RunStates.WAIT:
