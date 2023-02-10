@@ -41,36 +41,39 @@ if __name__ == '__main__':
     camera = Camera()
     camera.load_calibrate_info(CALIBRATE_PICKLE)
     
-
+    # [0, 350], [640, 350], [400, 50], [100, 50]
     while True:
-        time.sleep(0.01)
-        flag, frame = video.read()
-
-        if flag:
-
-            #   ====================    MAIN FLOW   =====================
-            frame = cv.resize(frame, IMG_SIZE)
-            calibrate_img = camera.undistort(frame)
-
-#           plt.imshow(calibrate_img)
-#            plt.show()
-            # detection_img= camera._runDetectLane(calibrate_img)
-            # detection_results = camera._runDetectLane(calibrate_img)    #   TEST
-            # plottable = detection_results['lane_img']
-            # print(plottable) 
-            # cv.imshow("Detection", plottable)                           #TEST
-            ######################### TESTING   #########################
-            output = camera.laneDetector.processor.process(calibrate_img)
-            thresh = output['thresh']
-            
-            # cv.imshow('points', points_img)
-            cv.imshow('Thresh', thresh)
-            # cv.imshow('Detection', detection_img)
-            #############################################################
-            # cv.imshow('Main', output['birdeye']['birdeye'])
-            # cv.imshow("Test", out_test)
-            # cv.imshow("Thresh", tmp)
-            cv.waitKey(1)
+        try:
+            time.sleep(0.05)
+            flag, frame = video.read()
+            if flag:
+                
+                
+                #   ====================    MAIN FLOW   =====================
+                frame = cv.resize(frame, IMG_SIZE)
+                calibrate_img = camera.undistort(frame)
+               
+                # plt.imsave(SAVE_DIR + 'bev.jpeg', calibrate_img)
+                # plt.imshow(calibrate_img)
+                # plt.show()
+                detection_results = camera._runDetectLane(calibrate_img)    #   TEST
+                plottable = detection_results['lane_img']
+                # print(plottable) 
+                cv.imshow("Detection", plottable)                           #TEST
+                ######################### TESTING   #########################
+                # output = camera.laneDetector.processor.process(calibrate_img)
+                # thresh = output['birdeye_img']
+                
+                # # # cv.imshow('points', points_img)
+                # cv.imshow('Thresh', thresh)
+                # # cv.imshow('Detection', detection_img)
+                #############################################################
+                # cv.imshow('Main', output['birdeye']['birdeye'])
+                # cv.imshow("Test", out_test)
+                # cv.imshow("Thresh", tmp)
+                cv.waitKey(1)
+        except Exception as e:
+            print(e)
 
     
    
