@@ -131,6 +131,7 @@ class actionNODE:
         if msg.traffic_sign_type == "STOP_SIGN":
             self.traffic_sign = TrafficSign.STOP_SIGN
             if run_state==RunStates.RUNNING:
+                self.sign_start_time = rospy.get_time()
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign_type == "PARKING_SIGN":
