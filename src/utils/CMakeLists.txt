@@ -49,6 +49,7 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   trafficlight.msg
+  lane.msg
   IMU.msg
   localisation.msg
   vehicles.msg
