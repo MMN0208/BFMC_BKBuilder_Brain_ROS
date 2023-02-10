@@ -84,7 +84,6 @@ class actionNODE:
         self.lane = LanePosition.RIGHT_LANE
         self.lane_switchable = False
         self.base_speed = 0.1
-        self.steer_speed = 0.8
         self.lock = 0
         self.unlock = 1
         self.control = controlNODE()
@@ -130,50 +129,56 @@ class actionNODE:
             self.control.setSpeed(self.base_speed)
     
     def traffic_sign_check(self, msg):
-        if msg.data == "STOP_SIGN":
+        if msg.traffic_sign_type == "STOP_SIGN":
             self.traffic_sign = TrafficSign.STOP_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "PARKING_SIGN":
+        elif msg.traffic_sign_type == "PARKING_SIGN":
             self.traffic_sign = TrafficSign.PARKING_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "CROSS_WALK":
+        elif msg.traffic_sign_type == "CROSS_WALK":
             self.traffic_sign = TrafficSign.CROSS_WALK
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "PRIORITY_SIGN":
+        elif msg.traffic_sign_type == "PRIORITY_SIGN":
             self.traffic_sign = TrafficSign.PRIORITY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "HIGHWAY_ENTRANCE_SIGN"
+        elif msg.traffic_sign_type == "HIGHWAY_ENTRANCE_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "HIGHWAY_EXIT_SIGN"
+        elif msg.traffic_sign_type == "HIGHWAY_EXIT_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "ROUNDABOUT_SIGN"
+        elif msg.traffic_sign_type == "ROUNDABOUT_SIGN"
             self.traffic_sign = TrafficSign.ROUNDABOUT_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "ONE_WAY_SIGN"
+        elif msg.traffic_sign_type == "ONE_WAY_SIGN"
             self.traffic_sign = TrafficSign.ONE_WAY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "NO_ENTRY_SIGN"
+        elif msg.traffic_sign_type == "NO_ENTRY_SIGN"
             self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
+                
+    def traffic_light_check(self, msg):
+        print("Hello")
+        
+    def imu_check(self, msg):
+        
         
     def wait_action(self):
             if  (    
