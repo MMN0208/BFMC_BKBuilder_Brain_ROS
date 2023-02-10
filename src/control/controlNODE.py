@@ -54,17 +54,6 @@ class controlNODE():
      # ===================================== RUN ==========================================
     def run(self):
         rospy.loginfo("starting controlNODE")
-        while not rospy.is_shutdown():
-            self.activatePID()
-            time.sleep(1)
-            self.moveForward(1, 0.1)
-            time.sleep(1)
-            self.brake(0)
-            time.sleep(2)
-            self.setSpeed(0.2)
-            time.sleep(1)
-            self.setSteer(15)
-            time.sleep(1)
         
 if __name__ == "__main__":
     ctrlNod = controlNODE()

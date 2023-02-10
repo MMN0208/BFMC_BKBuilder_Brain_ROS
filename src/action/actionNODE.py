@@ -54,6 +54,10 @@ class TrafficLightRule(Enum):
     RED_LIGHT = 1
     YELLOW_LIGHT = 2
     
+class LanePosition(Enum):
+    LEFT_LANE = 0
+    RIGHT_LANE = 1
+    
 class actionNODE:
     def __init__(self) -> None:
         rospy.init_node('actionNODE', anonymous=False)
@@ -77,7 +81,13 @@ class actionNODE:
         self.init = 1
         self.start_signal = 0
         self.traffic_sign = NO_SIGN
+        self.lane = LanePosition.RIGHT_LANE
+        self.lane_switchable = False
+        self.base_speed = 0.1
+        self.steer_speed = 0.8
+        self.lock = 0
         self.unlock = 1
+        self.control = controlNODE()
         self.main_process()
         
     def lock_state(self, state):
@@ -95,6 +105,29 @@ class actionNODE:
             if (rospy.get_time() - self.lock_start_time) >= time:
                 self.unlock = 1
                 self.lock = 0
+                
+    def lane_check(sel, msg):
+        if self.lane == LanePosition.RIGHT_LANE: #on the right side of the road, check left lane type for lane switching
+            if msg.left_lane_type == 1: #dotted lane
+                self.lane_switchable = True
+            else:
+                self.lane_switchable = False
+                
+        else: #on the left side of the road, check right lane type for lane switching
+            if msg.right_lane_type == 1: #dotted lane
+                self.lane_switchable = True
+            else:
+                self.lane_switchable = False
+        
+        control.setSteer(msg.steer_angle)
+
+        OFFSET_ANGLE = 20
+        MOD = 10
+        offset_speed = abs((abs(msg.steer_angle) - OFFSET_ANGLE)) // MOD
+        if offset_speed > 0:
+            self.control.setSpeed(self.base_speed - offset_speed)
+        else:
+            self.control.setSpeed(self.base_speed)
     
     def traffic_sign_check(self, msg):
         if msg.data == "STOP_SIGN":
