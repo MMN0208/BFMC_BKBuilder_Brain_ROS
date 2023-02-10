@@ -58,6 +58,11 @@ class LanePosition(Enum):
     LEFT_LANE = 0
     RIGHT_LANE = 1
     
+class SpeedMod(Enum):
+    NORMAL = 1
+    HIGH = 1.4
+    LOW = 0.6
+    
 class actionNODE:
     def __init__(self) -> None:
         rospy.init_node('actionNODE', anonymous=False)
@@ -82,8 +87,10 @@ class actionNODE:
         self.start_signal = 0
         self.traffic_sign = NO_SIGN
         self.lane = LanePosition.RIGHT_LANE
+        self.speed_mod = SpeedMod.NORMAL
         self.lane_switchable = False
         self.base_speed = 0.1
+        self.steer_angle = 0
         self.lock = 0
         self.unlock = 1
         self.control = controlNODE()
@@ -117,56 +124,50 @@ class actionNODE:
                 self.lane_switchable = True
             else:
                 self.lane_switchable = False
-        
-        control.setSteer(msg.steer_angle)
-
-        OFFSET_ANGLE = 20
-        MOD = 10
-        offset_speed = abs((abs(msg.steer_angle) - OFFSET_ANGLE)) // MOD
-        if offset_speed > 0:
-            self.control.setSpeed(self.base_speed - offset_speed)
-        else:
-            self.control.setSpeed(self.base_speed)
+                
+        self.steer_angle = msg.steer_angle
     
     def traffic_sign_check(self, msg):
         if msg.traffic_sign_type == "STOP_SIGN":
             self.traffic_sign = TrafficSign.STOP_SIGN
-            if run_state==RUNNING:
+            if run_state==RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign_type == "PARKING_SIGN":
             self.traffic_sign = TrafficSign.PARKING_SIGN
-            if run_state==RUNNING:
+            if run_state==RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign_type == "CROSS_WALK":
             self.traffic_sign = TrafficSign.CROSS_WALK
-            if run_state==RUNNING:
+            if run_state==RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign_type == "PRIORITY_SIGN":
             self.traffic_sign = TrafficSign.PRIORITY_SIGN
-            if run_state==RUNNING:
+            if run_state==RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign_type == "HIGHWAY_ENTRANCE_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
+            if run_state==RunStates.RUNNING:
+                self.speed_mod = SpeedMod.HIGH
+                self.run_state = RunStates.HIGHWAY
                 
         elif msg.traffic_sign_type == "HIGHWAY_EXIT_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
+            if run_state==RunStates.HIGHWAY:
+                self.speed_mod = SpeedMod.NORMAL
+                self.run_state = RunStates.RUNNING
                 
         elif msg.traffic_sign_type == "ROUNDABOUT_SIGN"
             self.traffic_sign = TrafficSign.ROUNDABOUT_SIGN
-            if run_state==RUNNING:
+            if run_state==RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign_type == "ONE_WAY_SIGN"
             self.traffic_sign = TrafficSign.ONE_WAY_SIGN
-            if run_state==RUNNING:
+            if run_state==RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign_type == "NO_ENTRY_SIGN"
@@ -178,15 +179,44 @@ class actionNODE:
         print("Hello")
         
     def imu_check(self, msg):
+        RAMP_HEIGHT = 15
+        RAMP_WIDTH = 100 # not know the exact value
+        RAMP_ANGLE = math.atan(RAMP_HEIGHT/RAMP_WIDTH)
         
+        if msg.pitch > 0 and msg.pitch <= RAMP_ANGLE:
+            if self.run_state == RunStates.RUNNING:
+                self.speed_mod = SpeedMod.HIGH
+                self.run_state = RunStates.RAMP
+            
+        elif msg.pitch < 0 and msg.pitch >= -RAMP_ANGLE:
+            if self.run_state == RunStates.RAMP:
+                self.speed_mod = SpeedMod.LOW
+                
+        else:
+            if self.run_state == RunStates.RAMP and self.speed_mod = SpeedMod.LOW:
+                self.run_state = RunStates.RUNNING
+            self.speed_mod = NORMAL
+                
+    def running_action(self):
+        self.control.setSteer(self.steer_angle)
+        OFFSET_ANGLE = 20
+        MOD = 10
+        offset_speed = abs((abs(self.steer_angle) - OFFSET_ANGLE)) // MOD
+        if offset_speed > 0:
+            self.control.setSpeed(self.base_speed - offset_speed)
+        else:
+            self.speed_action()
         
     def wait_action(self):
-            if  (    
-                (traffic_light and light_color == TrafficLightColor.GREEN_LIGHT) or 
-                (stop_sign     and rospy.get_time() - self.sign_start_time >= 3) or
-                (pedestrian    and pedestrian_detection == PedestrianPosition.LEFT)
-            ):
-            self.lock_state(RunStates.RUNNING)
+        if  (    
+            (traffic_light and light_color == TrafficLightColor.GREEN_LIGHT) or 
+            (stop_sign     and rospy.get_time() - self.sign_start_time >= 3) or
+            (pedestrian    and pedestrian_detection == PedestrianPosition.LEFT)
+        ):
+        self.lock_state(RunStates.RUNNING)
+            
+    def speed_action(self): # called in state == RAMP and HIGHWAY
+        self.control.setSpeed(self.base_speed * self.speed_mod)
             
     def auto_control(self):
         if testRUNING:
@@ -194,7 +224,6 @@ class actionNODE:
         if testWAITING:
             if self.run_state == RunStates.WAIT:
                 self.wait_action()
-            
         
     def run(self):
         while not rospy.is_shutdown() and start: 
