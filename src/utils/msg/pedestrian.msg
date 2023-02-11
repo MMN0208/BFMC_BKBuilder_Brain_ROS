@@ -1,3 +1,4 @@
+sensor_msgs/Image image
 bool valid
 bool is_pedestrian_infront
 float32 x

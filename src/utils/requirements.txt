@@ -1,3 +1,5 @@
 RTIMULib
 picamera
 pyserial
+munkres
+scipy

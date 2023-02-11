@@ -48,9 +48,9 @@ class cameraSpooferNODE():
         # params
         self.videoSize = (640,480)
         
-        self.videoDir = "/home/BFMC_BKBuilder_Brain_ROS/src/input/src/cameraHandler/"
+        self.videoDir = "/home/pi/BFMC_BKBuilder_Brain_ROS/video/"
         self.videos = self.open_files(self.videoDir, ext = ext)
-        
+        print(self.videos)
         rospy.init_node('cameraSpooferNODE', anonymous=False)
         self.image_publisher = rospy.Publisher("/automobile/image_raw", Image, queue_size=1)
         

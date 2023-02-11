@@ -7,11 +7,11 @@ import yaml
 import numpy as np
 import pycoral.utils.edgetpu as etpu
 from pycoral.adapters import common
-from src.utils.detection.edgetpumodel.nms import non_max_suppression
 import cv2
 import json
 
-from src.utils.detection.edgetpumodel.utils import plot_one_box, Colors, get_image_tensor
+from object_detection.network.nms import non_max_suppression
+from object_detection.network.utils import plot_one_box, Colors, get_image_tensor
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("EdgeTPUModel")

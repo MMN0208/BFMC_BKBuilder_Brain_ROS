@@ -33,15 +33,16 @@ import json
 import time
 import rospy
 
-from std_msgs.msg      import String, Image
+from std_msgs.msg      import String
+from sensor_msgs.msg import Image
 from utils.srv        import subscribing, subscribingResponse
 from cv_bridge       import CvBridge
 
 #import object detection
 import numpy as np
 import cv2
-from src.perception.object_detection.network.edgetpumodel import EdgeTPUModel
-from src.perception.object_detection.network.utils import plot_one_box, Colors, get_image_tensor
+from object_detection.network.edgetpumodel import EdgeTPUModel
+from object_detection.network.utils import plot_one_box, Colors, get_image_tensor
 
 #import lane detection
 class perceptionNODE():
@@ -72,14 +73,14 @@ class perceptionNODE():
         rospy.init_node('perceptionNODE', anonymous=False)
         
         # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
-        self.command_publisher = rospy.Publisher("automobile/perception", String)
+        #self.command_publisher = rospy.Publisher("/automobile/perception", String)
         #======CAMERA======
         self.bridge = CvBridge()
         self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
-        self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
+        #self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
         #======OBJECT DETECTION======
-        self.model_path = "src/perception/object_detection/weights/traffic.tflite"
-        self.names = "src/perception/object_detection/data.yaml"
+        self.model_path = "object_detection/weights/traffic.tflite"
+        self.names = "object_detection/data.yaml"
         self.conf_thresh = 0.5
         self.iou_thresh = 0.65
         self.device = 0
@@ -103,7 +104,7 @@ class perceptionNODE():
         """Object detection callback
         """
         image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         output_image = image
         full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
         pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
@@ -118,11 +119,13 @@ class perceptionNODE():
             cls (int): class index of prediction
             '''
             c = int(cls)  # integer class
-            label = f'{self.names[c]} {conf:.2f}' #Set label to the class detected
+            label = f'{self.model.names[c]} {conf:.2f}' #Set label to the class detected
             command = f'DETECT:{label}:{xyxy}'
-            self.command_publisher.publish(command)
-            #output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
-                    
+            #self.command_publisher.publish(command)
+            output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
+        
+        cv2.imshow("test", output_image)       
+        cv2.waitKey(1)      
         tinference, tnms = self.model.get_last_inference_time()
         print("Frame done in {}".format(tinference+tnms))
      
