@@ -37,12 +37,10 @@ from std_msgs.msg      import String
 from sensor_msgs.msg import Image
 from utils.srv        import subscribing, subscribingResponse
 from cv_bridge       import CvBridge
-from utils.msg      import lane
+from utils.msg      import perception, lane
 #import object detection
 import numpy as np
 import cv2
-from src.perception.object_detection.network.edgetpumodel import EdgeTPUModel
-from src.perception.object_detection.network.utils import plot_one_box, Colors, get_image_tensor
 from src.perception.lane_detection.core.utils import TESTNODES
 #import lane detection
 class perceptionNODE():
@@ -95,67 +93,38 @@ class perceptionNODE():
         # self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
 
-        #======OBJECT DETECTION======
-        self.model_path = "src/perception/object_detection/weights/traffic.tflite"
-        self.names = "src/perception/object_detection/data.yaml"
-        self.conf_thresh = 0.5
-        self.iou_thresh = 0.65
-        self.device = 0
-        
-        self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
-        
-        #self.colors = Colors()
-        
         #=======LANE DETECTION======="""s
         self.lane_publisher = rospy.Publisher("/automobile/lane", String, queue_size =1)
         self.bev_publisher = rospy.Publisher("/automobile/bev", Image, queue_size = 1)
-        
+        self.lane_info_publisher = rospy.Publisher("/automobile/lane_info", String, queue_size = 1)
     # ===================================== RUN ==========================================
     def run(self):
         """Apply the initializing methods and start the threads
         """
         rospy.loginfo("starting perceptionNODE")
-        #self._read() 
         rospy.spin()   
-        #self._testNODE()        
-    # ===================================== OBJECT DETECT ========================================
-    # def _object(self, msg):
-    #     """Object detection callback
-    #     """
-    #     image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-    #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-    #     output_image = image
-    #     full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
-    #     pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
-    #     #print(f"DetectionProcess{net_image.shape}")
-    #     det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
-                
-                
-    #     for *xyxy, conf, cls in reversed(det): #Process prediction loop
-    #         '''
-    #         xyxy (List): bounding box
-    #         conf (int): prediction percentage
-    #         cls (int): class index of prediction
-    #         '''
-    #         c = int(cls)  # integer class
-    #         label = f'{self.names[c]} {conf:.2f}' #Set label to the class detected
-    #         command = f'DETECT:{label}:{xyxy}'
-    #         self.command_publisher.publish(command)
-    #         #output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
-                    
-    #     tinference, tnms = self.model.get_last_inference_time()
-    #     print("Frame done in {}".format(tinference+tnms))
      
     # ===================================== LANE DETECT ========================================
     
     def _lane(self, msg):
         """Lane detection callback
-        Send multiple messages with multiple types, please visit head of source file for 
-        more details.
-
-        Note: at this time just use pseudo messages defined in TESTNODES to test the publish() command
         """
-        msg = lane()
+        
+        
+    def send_perceptionInfo(self):
+        
+        """
+        Send message via topic "automobile/lane"
+
+        Message format:
+            float32 steer_angle
+            float32 radius_of_curvature
+            float32 off_centre
+            int8 left_lane_type
+            int8 right_lane_type
+            int32 midpoint
+        """
+        msg = perception()
         msg.steer_angle =   TESTNODES['STEER_ANGLE']
         msg.radius_of_curvature = TESTNODES['RADIUS']
         msg.off_centre = TESTNODES['OFF_CENTRE']
@@ -165,8 +134,22 @@ class perceptionNODE():
         
         while not rospy.is_shutdown():
             self.lane_publisher.publish(msg)
-        
 
+    def send_laneInfo(self):
+        """
+        Send message via topic "automobile/lane_info"
+        
+        Message format
+            float32: width_topleft
+            float32: height_topleft
+            float32: width_topright
+            float32: heigth_topright
+            float32: width_bottomleft
+            float32: height_bottomleft
+            float32: width_bottomright
+            float32: heigth_bottomright
+
+        """
 
     def send_BEV(self, msg):
         """Birdeye view callback
@@ -198,16 +181,7 @@ class perceptionNODE():
         command = json.loads(msg.data)
         #command = msg.data
         print(command)
-    def _testNODE(self):
-        msg = lane()
-        msg.steer_angle = 30.2
-        msg.radius_of_curvature = 12.2
-        msg.off_centre = 23.2
-        msg.left_lane_type = 0
-        msg.left_lane_type = 1
-        msg.midpoint = 10
-        while not rospy.is_shutdown():
-            self.lane_publisher.publish(msg)
+    
 if __name__ == "__main__":
     perNod = perceptionNODE()
     perNod.run()
