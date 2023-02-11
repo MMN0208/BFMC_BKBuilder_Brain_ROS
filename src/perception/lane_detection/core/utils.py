@@ -13,14 +13,15 @@ TESTNODES['OFF_CENTRE'] = 23.2                  #   Off center
 TESTNODES['LLT'] = 0                            #   Left lane type
 TESTNODES['RLT'] = 1                            #   Right lane type
 TESTNODES['MIDPOINT'] = 320                     #   Mid point
-TESTNODE['WTL'] = 30
-TESTNODE['HTL'] = 50
-TESTNODE['WTR'] = 600
-TESTNODES['HTR'] = 50
-TESTNODES['WBL'] = 30
-TESTNODES['HBL'] = 350
-TESTNODES['WBR'] = 600
-TESTNODE['HBR'] = 50
+
+TESTNODE['WTL'] = 30                            #   width top left
+TESTNODE['HTL'] = 50                            #   height top left
+TESTNODE['WTR'] = 600                           #   width top right
+TESTNODES['HTR'] = 50                           #   height top right
+TESTNODES['WBL'] = 30                           #   width bottom left
+TESTNODES['HBL'] = 350                          #   height bottom left
+TESTNODES['WBR'] = 600                          #   width bottom right
+TESTNODE['HBR'] = 50                            #   height bottom right
 #####################   END TEST CONFIG  ########################
 
 ##################  HELPER FUNCTIONS    ###########################

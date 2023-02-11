@@ -7,20 +7,22 @@ import time
 from utils.msg import lane
 
 class testPerceptionNODE():
+    """Don't explicitly define the tet value
+        because we are not going to do that further.
+    """
     def __init__(self) -> None:
         rospy.init_node("testPerceptionNODE", anonymous = False)
-        self.lane_subcriber = rospy.Subscriber("automobile/lane",lane,self._test)
-    def run(self):
-        self._read()
-    def _read(self):
-        while not rospy.is_shutdown():
-            try:
-                print("Hello from test perception")
-                time.sleep(2)
-            except UnicodeDecodeError:
-                pass
-    def _test(self,msg):
-        print(msg)        
+    
+    def testTopicLane(self, msg):
+        #   Use to test the lane_publisher publisher
+        #   lane_publisher is located at src/perception/perceptionNODE.py
+        pass
+
+    def testTopicLaneInfo(self, msg):
+        #   Use to test the lane_info_publisher publisher
+        #   lane_info_publisher is located at src/perception/perceptionNODE.py
+        pass
+        
 
 if __name__ == "__main__":
     testNODE = testPerceptionNODE()

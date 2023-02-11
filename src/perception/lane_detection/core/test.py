@@ -26,7 +26,7 @@ if __name__ == '__main__':
         cv.rectangle(img, botSrc, topSrc, (0,255,0), 1)
         cv.rectangle(img, botDst, topDst, (255, 0, 0), 1)
         for idx in range(4):
-            cv.circle(img, (int(src[idx][0], src[idx][1])), 15, (0,0,255), cv.FILLED)
+            cv.circle(img, (int(src[idx][0], src[idx][1])), 15, (0,0,255),)
 
 
         cv.imshow("Rec", img)
