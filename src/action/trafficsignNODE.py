@@ -2,11 +2,12 @@
 
 import cv2
 import sys
-sys.path.append('.') 
+sys.path.append('../') 
 import rospy
 from enum import Enum
 import time
 from utils.msg import TrafficSign
+from control import controlNODE
 
 class trafficsignNODE():
     def traffic_sign_processing(self, msg):
