@@ -7,23 +7,34 @@ import rospy
 from enum import Enum
 import time
 from utils.msg import TrafficSign
-from control import controlNODE
+from control.controlNODE import controlNODE
 
 class trafficsignNODE():
     def traffic_sign_processing(self, msg):
         traffic_sign = msg.traffic_sign_type
         if traffic_sign == 6: #detech a STOP sign
             print("Stop at least 3 seconds")
+            controlNODE().brake(0)
+            start_time = time.time()
+            while((time.time() - start_time) > 3):
+                pass   
         elif traffic_sign == 3: #packing place
             print("pass")
         elif traffic_sign == 0: #crosswalk
             print("Slow down")
+            controlNODE().brake(0)
+            sleep(1)
         elif traffic_sign == 4: #priority walk
             print("Do not stop at intesection")
         elif traffic_sign ==  2: #one way road
             print("go straight")
+            controlNODE().setSpeed(0.3)
         elif traffic_sign == 1:
             print("turn other way")
+            controlNODE().setSteer(23)
+            controlNODE().moveForward(0.3, 0.3)
+            controlNODE().setSteer(0)
+            controlNODE().setSpeed(0.3)
 
     def __init__(self): 
         rospy.init_node('trafficsignNODE', anonymous = False)
