@@ -13,7 +13,10 @@ class controlNODE():
         
         rospy.init_node('controlNODE', anonymous=False)
         
-        self.command_publisher = rospy.Publisher("/automobile/command", String, queue_size=1)
+        self.command_publisher = rospy.Publisher("/automobile/command", String, queue_size=5)
+            
+        time.sleep(1)
+        self.activatePID(True)
         
     def activatePID(self, activate=True):
         _activate = {
@@ -54,6 +57,7 @@ class controlNODE():
      # ===================================== RUN ==========================================
     def run(self):
         rospy.loginfo("starting controlNODE")
+        self.moveForward(1, 0.2)
         
 if __name__ == "__main__":
     ctrlNod = controlNODE()
