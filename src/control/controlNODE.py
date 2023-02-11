@@ -9,10 +9,7 @@ from std_msgs.msg      import String
 from utils.srv        import subscribing, subscribingResponse
 
 class controlNODE():
-    def __init__(self):
-        
-        rospy.init_node('controlNODE', anonymous=False)
-        
+    def __init__(self):        
         self.command_publisher = rospy.Publisher("/automobile/command", String, queue_size=1)
         
     def activatePID(self, activate=True):
@@ -50,22 +47,3 @@ class controlNODE():
                 "brake (steerAngle)": float(steerAngle)
             }
         self.command_publisher.publish(json.dumps(_brake))
-        
-     # ===================================== RUN ==========================================
-    def run(self):
-        rospy.loginfo("starting controlNODE")
-        while not rospy.is_shutdown():
-            self.activatePID()
-            time.sleep(1)
-            self.moveForward(1, 0.1)
-            time.sleep(1)
-            self.brake(0)
-            time.sleep(2)
-            self.setSpeed(0.2)
-            time.sleep(1)
-            self.setSteer(15)
-            time.sleep(1)
-        
-if __name__ == "__main__":
-    ctrlNod = controlNODE()
-    ctrlNod.run()

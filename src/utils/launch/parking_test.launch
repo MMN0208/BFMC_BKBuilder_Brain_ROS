@@ -1,4 +1,3 @@
 <launch>
     <node pkg="action" type="parkingNODE.py" 	name="parkingNODE"  	output="screen" cwd="node" />
-
 </launch>

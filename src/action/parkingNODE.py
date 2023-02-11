@@ -7,7 +7,7 @@ import rospy
 from enum import Enum
 import time
 from utils.msg import Parking
-from control import controlNODE
+from control.controlNODE import controlNODE
 
 class parkingNODE():
     def traffic_sign_parking_processing(self, msg):
@@ -38,6 +38,7 @@ class parkingNODE():
         self.parking_subscriber = rospy.Subscriber("/automobile/parking", Parking, self.traffic_sign_parking_processing)
         self.unlock = 1
         self.lock = 0
+        self.control = controlNODE()
 
     def run(self):
         rospy.loginfo('starting parkingNODE')
@@ -66,19 +67,19 @@ class parkingNODE():
                 self.lock = 0
     def parking_perpendicular(self, slot1, slot2):
         if slot1 == 1 and slot2 == 0:
-            controlNODE.setSteer(23)
-            controlNODE.moveForward(0.5, 0.3)
+            self.control.setSteer(23)
+            self.control.moveForward(0.5, 0.3)
         elif slot1 == 0 and slot2 == 1:
-            controlNODE.setSteer(23)
-            controlNODE.moveForward(-0.5, 0.3)
+            self.control.setSteer(23)
+            self.control.moveForward(-0.5, 0.3)
 
     def parking_parallel(self, slot1, slot2):
         if slot1 == 1 and slot2 == 0:
-            controlNODE.setSteer(23)
-            controlNODE.moveForward(0.5, 0.3)
+            control.setSteer(-23)
+            control.moveForward(0.5, 0.3)
         elif slot1 == 0 and slot2 == 1:
-            controlNODE.setSteer(23)
-            controlNODE.moveForward(-0.5, 0.3)
+            control.setSteer(-23)
+            control.moveForward(-0.5, 0.3)
 
 if __name__ == "__main__":
     parkNODE = parkingNODE()
