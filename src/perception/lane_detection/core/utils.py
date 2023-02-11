@@ -1,12 +1,14 @@
 import cv2 as cv
 import numpy as np
 import pickle
-from const import *
+import sys
+sys.path.append('.')
+from .const import *
 # from numba import float32, uint16
 
 ##################  TEST CONFIG #################################
 TESTNODES = dict()
-TESTNODES['BEV'] = np.random.randn(640, 360)    #   Bird eye view image 
+TESTNODES['BEV'] = np.random.randn(640, 360,3)    #   Bird eye view image 
 TESTNODES['STEER_ANGLE'] = 30.2                 #   Steering angle
 TESTNODES['RADIUS'] = 12.2                      #   Radius of curvature
 TESTNODES['OFF_CENTRE'] = 23.2                  #   Off center  
@@ -14,14 +16,14 @@ TESTNODES['LLT'] = 0                            #   Left lane type
 TESTNODES['RLT'] = 1                            #   Right lane type
 TESTNODES['MIDPOINT'] = 320                     #   Mid point
 
-TESTNODE['WTL'] = 30                            #   width top left
-TESTNODE['HTL'] = 50                            #   height top left
-TESTNODE['WTR'] = 600                           #   width top right
+TESTNODES['WTL'] = 30                            #   width top left
+TESTNODES['HTL'] = 50                            #   height top left
+TESTNODES['WTR'] = 600                           #   width top right
 TESTNODES['HTR'] = 50                           #   height top right
 TESTNODES['WBL'] = 30                           #   width bottom left
 TESTNODES['HBL'] = 350                          #   height bottom left
 TESTNODES['WBR'] = 600                          #   width bottom right
-TESTNODE['HBR'] = 50                            #   height bottom right
+TESTNODES['HBR'] = 50                            #   height bottom right
 #####################   END TEST CONFIG  ########################
 
 ##################  HELPER FUNCTIONS    ###########################

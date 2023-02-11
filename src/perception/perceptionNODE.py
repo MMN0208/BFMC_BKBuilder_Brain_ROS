@@ -32,7 +32,6 @@
 import json
 import time
 import rospy
-
 from std_msgs.msg      import String
 from sensor_msgs.msg import Image
 from utils.srv        import subscribing, subscribingResponse
@@ -41,7 +40,7 @@ from utils.msg      import perception, lane
 #import object detection
 import numpy as np
 import cv2
-from src.perception.lane_detection.core.utils import TESTNODES
+from lane_detection.core.utils import TESTNODES
 #import lane detection
 class perceptionNODE():
     def __init__(self):
@@ -94,16 +93,19 @@ class perceptionNODE():
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
 
         #=======LANE DETECTION======="""s
-        self.lane_publisher = rospy.Publisher("/automobile/lane", String, queue_size =1)
+        self.lane_publisher = rospy.Publisher("/automobile/lane", perception, queue_size =1)
         self.bev_publisher = rospy.Publisher("/automobile/bev", Image, queue_size = 1)
-        self.lane_info_publisher = rospy.Publisher("/automobile/lane_info", String, queue_size = 1)
+        self.lane_info_publisher = rospy.Publisher("/automobile/lane_info",lane, queue_size = 1)
     # ===================================== RUN ==========================================
     def run(self):
         """Apply the initializing methods and start the threads
         """
         rospy.loginfo("starting perceptionNODE")
-        rospy.spin()   
-     
+        #rospy.spin() 
+        while not rospy.is_shutdown():
+            self.send_perceptionInfo()
+            self.send_laneInfo()
+            self.send_BEV()
     # ===================================== LANE DETECT ========================================
     
     def _lane(self, msg):
@@ -131,9 +133,7 @@ class perceptionNODE():
         msg.left_lane_type = TESTNODES['LLT']
         msg.left_lane_type = TESTNODES['RLT']
         msg.midpoint = TESTNODES['MIDPOINT']
-        
-        while not rospy.is_shutdown():
-            self.lane_publisher.publish(msg)
+        self.lane_publisher.publish(msg)
 
     def send_laneInfo(self):
         """
@@ -150,18 +150,27 @@ class perceptionNODE():
             float32: heigth_bottomright
 
         """
+        msg = lane()
+        msg.width_topleft =TESTNODES['WTL'] 
+        msg.height_topleft = TESTNODES['HTL'] 
+        msg.width_topright= TESTNODES['WTR'] 
+        msg.height_topright=TESTNODES['HTR'] 
+        msg.width_bottomright=TESTNODES['WBL'] 
+        msg.height_bottomleft=TESTNODES['HBL'] 
+        msg.width_bottomright=TESTNODES['WBR'] 
+        msg.height_bottomright=TESTNODES['HBR']
+        self.lane_info_publisher.publish(msg)
 
-    def send_BEV(self, msg):
+    def send_BEV(self):
         """Birdeye view callback
         Send only one message type Image (please visit ROs documentation for more information about custom message type)
         
         Note: at this time just use pseudo messages defined in TESTNODES to test the publish() command
         """
         image = TESTNODES['BEV']
-        print("Image to be send: {}".format(image))
-        send_image = self.bridge.cv2_to_imgmsg(image, 'bgr8')
-        while not rospy.is_shutdown():
-            self.bev_publisher.publish(send_image)
+        #print("Image to be send: {}".format(type(image)))
+        send_image = self.bridge.cv2_to_imgmsg(image, '64FC3')
+        self.bev_publisher.publish(send_image)
 
     # ===================================== READ ==========================================
     def _read(self):
