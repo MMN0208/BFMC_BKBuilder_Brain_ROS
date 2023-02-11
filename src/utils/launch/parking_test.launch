@@ -1,3 +1,4 @@
 <launch>
+    <node pkg="output" type="serialNODE.py" 	name="serialNODE"  	output="screen" cwd="node" />
     <node pkg="action" type="parkingNODE.py" 	name="parkingNODE"  	output="screen" cwd="node" />
 </launch>

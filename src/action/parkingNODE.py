@@ -42,7 +42,7 @@ class parkingNODE():
 
     def run(self):
         rospy.loginfo('starting parkingNODE')
-        self._read()
+        rospy.spin()
     
     def _read(self):
         while not rospy.is_shutdown():
@@ -67,19 +67,44 @@ class parkingNODE():
                 self.lock = 0
     def parking_perpendicular(self, slot1, slot2):
         if slot1 == 1 and slot2 == 0:
-            self.control.setSteer(23)
-            self.control.moveForward(0.5, 0.3)
+            self.control.setSteer(-23)
+            self.control.moveForward(0.5, 0.1)
+            time.sleep(5)
+            self.control.setSteer(20)
+            self.control.moveForward(0.9, -0.1)
         elif slot1 == 0 and slot2 == 1:
             self.control.setSteer(23)
-            self.control.moveForward(-0.5, 0.3)
+            self.control.moveForward(1.5, 0.1)
 
     def parking_parallel(self, slot1, slot2):
         if slot1 == 1 and slot2 == 0:
-            control.setSteer(-23)
-            control.moveForward(0.5, 0.3)
+            self.control.setSteer(23)
+            #self.control.moveForward(0.5, 0.3)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(-23)
+            time.sleep(1)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(5)
+            time.sleep(1)
+            self.control.moveForward(0.4, 0.1)
         elif slot1 == 0 and slot2 == 1:
-            control.setSteer(-23)
-            control.moveForward(-0.5, 0.3)
+            self.control.setSteer(23)
+            #self.control.moveForward(0.5, 0.3)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(-23)
+            time.sleep(1)
+            self.control.setSpeed(-0.1)
+            time.sleep(4)
+            self.control.setSpeed(0)
+            self.control.setSteer(5)
+            time.sleep(1)
+            #self.control.moveForward(0.5, 0.1)
 
 if __name__ == "__main__":
     parkNODE = parkingNODE()
