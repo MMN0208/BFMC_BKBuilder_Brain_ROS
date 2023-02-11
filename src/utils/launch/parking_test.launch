@@ -1,5 +1,4 @@
 <launch>
-    <node pkg="input" type="parking_inp.py" 	name="parking_inp"  	output="screen"/>
-    <node pkg="action" type="parking.py" 		name="parking"  		output="screen"/> 
-    <node pkg="output" type="parking_outp.py"   name="parking_outp"     output="screen"/>
+    <node pkg="action" type="parkingNODE.py" 	name="parkingNODE"  	output="screen" cwd="node" />
+
 </launch>

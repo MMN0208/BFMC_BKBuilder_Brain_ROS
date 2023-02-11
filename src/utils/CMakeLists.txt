@@ -51,6 +51,7 @@ add_message_files(
   IMU.msg
   localisation.msg
   vehicles.msg
+  Parking.msg
   environmental.msg
 )
 
