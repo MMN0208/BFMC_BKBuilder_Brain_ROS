@@ -97,47 +97,47 @@ class actionNODE:
                 self.lock = 0
     
     def traffic_sign_check(self, msg):
-        if msg.data == "STOP_SIGN":
+        if msg.traffic_sign == 6: #"STOP_SIGN":
             self.traffic_sign = TrafficSign.STOP_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "PARKING_SIGN":
+        elif msg.traffic_sign == 3: #"PARKING_SIGN":
             self.traffic_sign = TrafficSign.PARKING_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "CROSS_WALK":
+        elif msg.traffic_sign == 0: #"CROSS_WALK":
             self.traffic_sign = TrafficSign.CROSS_WALK
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "PRIORITY_SIGN":
+        elif msg.traffic_sign == 0: #"PRIORITY_SIGN":
             self.traffic_sign = TrafficSign.PRIORITY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "HIGHWAY_ENTRANCE_SIGN"
+        elif msg.traffic_sign == "HIGHWAY_ENTRANCE_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "HIGHWAY_EXIT_SIGN"
+        elif msg.traffic_sign == "HIGHWAY_EXIT_SIGN"
             self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "ROUNDABOUT_SIGN"
+        elif msg.traffic_sign == 7: #"ROUNDABOUT_SIGN"
             self.traffic_sign = TrafficSign.ROUNDABOUT_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "ONE_WAY_SIGN"
+        elif msg.traffic_sign == 2: #"ONE_WAY_SIGN"
             self.traffic_sign = TrafficSign.ONE_WAY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.data == "NO_ENTRY_SIGN"
+        elif msg.traffic_sign == 1: #"NO_ENTRY_SIGN"
             self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
             if run_state==RUNNING:
                 self.run_state = RunStates.WAIT

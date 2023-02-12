@@ -34,7 +34,7 @@ class trafficsignNODE():
 
         elif traffic_sign == 4: #priority road
             print("Do not stop at intesection")
-            #intersction -> cross walk -> 1: move forward, 2: turn right/left
+            #intersction -> cross walk -> 1: move forward || 2: turn right/left
             self.control.moveForward(0.3, 0.3)
 
 
@@ -66,6 +66,7 @@ class trafficsignNODE():
         self.trafficSign_subscriber = rospy.Subscriber("/automobile/traffic_sign", TrafficSign, self.traffic_sign_processing)
         self.unlock = 1
         self.lock = 0
+        self.control = controlNODE()
 
     def run(self):
         rospy.loginfo('starting trafficsignNODE')
