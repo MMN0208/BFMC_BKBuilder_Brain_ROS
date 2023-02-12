@@ -62,7 +62,7 @@ class objectNODE():
         #self.car_pubisher
         #self.traffic_light_publisher
         #======OBJECT DETECTION======
-        self.model_path = "object_detection/weights/traffic.tflite"
+        self.model_path = "object_detection/weights/traffic_1.tflite"
         self.names = "object_detection/data.yaml"
         self.conf_thresh = 0.5
         self.iou_thresh = 0.65
