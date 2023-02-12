@@ -1,0 +1,8 @@
+float32 width_topleft
+float32 height_topleft
+float32 width_topright
+float32 height_topright
+float32 width_bottomleft
+float32 height_bottomleft
+float32 width_bottomright
+float32 height_bottomright

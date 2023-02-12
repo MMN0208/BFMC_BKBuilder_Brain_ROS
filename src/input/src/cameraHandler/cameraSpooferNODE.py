@@ -31,25 +31,29 @@
 import io
 import numpy as np
 import time
-
+import os
+import glob
 import rospy
+
+import glob
+import cv2
 
 from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
 
 class cameraSpooferNODE():
-    def __init__(self, ext = '.h264'):
+    def __init__(self, ext = '.mp4'):
         """Node used for spoofing a camera/ publishing a video stream from a folder 
         with videos
         """
         # params
         self.videoSize = (640,480)
         
-        self.videoDir = "path/to/videos/directory"
+        self.videoDir = "/"
         self.videos = self.open_files(self.videoDir, ext = ext)
         
         rospy.init_node('cameraSpooferNODE', anonymous=False)
-        self.image_publisher = rospy.Publisher("/automobile/image_raw", Image, queue_size=1)
+        self.image_publisher = rospy.Publisher("/automobile/image_raw", Image, queue_size=60)
         
         self.bridge = CvBridge()
         
@@ -57,14 +61,13 @@ class cameraSpooferNODE():
     def run(self):
         """Apply the initializing methods and start the thread. 
         """
-        rospy.loginfo("starting camaeraSpooferNODE")
+        rospy.loginfo("starting cameraSpooferNODE")
         self._play_video(self.videos)
       
     # ===================================== INIT VIDEOS ==================================
     def open_files(self, inputDir, ext):
         """Open all files with the given path and extension
         """
-        
         files =  glob.glob(inputDir + '/*' + ext)  
         return files
 
@@ -89,6 +92,7 @@ class cameraSpooferNODE():
                             self.image_publisher.publish(imageObject)
                         except CvBridgeError as e:
                             print(e)
+                            print("\n err")
                                
                     else:
                         break

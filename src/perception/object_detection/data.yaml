@@ -1,0 +1,18 @@
+names:
+- Crosswalk sign
+- No-entry road sign
+- One way road sign
+- Parking sign
+- Priority sign
+- Round-about sign
+- Stop sign
+nc: 7
+roboflow:
+  license: CC BY 4.0
+  project: bfmc-7efic
+  url: https://universe.roboflow.com/project/bfmc-7efic/dataset/1
+  version: 1
+  workspace: project
+test: /content/drive/MyDrive/Cob/YOLOv8/yolov5/BFMC-1/test/images
+train: /content/drive/MyDrive/Cob/YOLOv8/yolov5/BFMC-1/train/images
+val: /content/drive/MyDrive/Cob/YOLOv8/yolov5/BFMC-1/valid/images
