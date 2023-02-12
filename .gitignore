@@ -49,3 +49,9 @@ qtcreator-*
 
 # Catkin custom files
 CATKIN_IGNORE
+
+#  Others 
+*.avi
+*.mp4
+*.mdj
+*.png
