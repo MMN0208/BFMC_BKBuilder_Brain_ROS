@@ -158,10 +158,11 @@ class actionNODE:
         pedestrian = msg.pedestrian
     
     def traffic_sign_check(self, msg):
+        global traffic_sign_type
         traffic_sign_type = msg.traffic_sign_type
         
         if DEBUG:
-            print("traffic_sign callback, sign: ", traffic_sign_type,"runstate: ", self.run_state)
+            print("traffic_sign callback, sign: ", traffic_sign_type, "runstate: ", self.run_state)
         
         if traffic_sign_type == TrafficSign.STOP_SIGN.value:
             # traffic_sign_type = TrafficSign.STOP_SIGN
@@ -253,17 +254,19 @@ class actionNODE:
         self.speed_action()
         
     def wait_action(self):
+        print(traffic_sign_type)
         if  (    
-            (traffic_light == True                 and light_color == TrafficLightColor.GREEN_LIGHT) or 
-            (traffic_sign == TrafficSign.STOP_SIGN and (time.time() - self.sign_start_time) >= 3) #or
+            #(traffic_light == True                       and light_color == TrafficLightColor.GREEN_LIGHT) or 
+            (traffic_sign_type == TrafficSign.STOP_SIGN.value and (time.time() - self.sign_start_time) >= 3) #or
             #(wait_for_pedestrian == True           and pedestrian == False)
         ):
-            wait_for_pedestrian = False
+        # if (time.time() - self.sign_start_time) >= 3:
+            #wait_for_pedestrian = False
             self.speed_mod = SpeedMod.NORMAL
             self.lock_state(RunStates.RUNNING)
         else:
             if DEBUG:
-                print(self.sign_start_time)
+                print(time.time() - self.sign_start_time)
             self.control.brake(0)
             
     def speed_action(self): # called in state == RAMP and HIGHWAY
@@ -308,6 +311,7 @@ class actionNODE:
             #     print("DOING NOTHING")
             # elif(self.state == State.ONLINE):
             self.auto_control()
+            rospy.sleep(0.1)
                 
 if __name__ == "__main__":
     action_node = actionNODE()
