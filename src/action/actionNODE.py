@@ -161,7 +161,7 @@ class actionNODE:
         traffic_sign_type = msg.traffic_sign_type
         
         if DEBUG:
-            print("traffic_sign callback, sign: ", traffic_sign_type, "runstate: ", self.run_state)
+            print("traffic_sign callback, sign: ", traffic_sign_type, ", run_state: ", self.run_state)
         
         if traffic_sign_type == TrafficSign.STOP_SIGN.value:
             # traffic_sign_type = TrafficSign.STOP_SIGN
