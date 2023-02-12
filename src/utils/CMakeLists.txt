@@ -53,6 +53,8 @@ add_message_files(
   traffic_sign.msg
   vehicles.msg
   environmental.msg
+  lane.msg
+  perception.msg
 )
 
 ## Generate services in the 'srv' folder
