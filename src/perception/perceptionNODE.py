@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 
 #import serial
+import math
 import json
 import time
 import rospy
@@ -114,6 +115,7 @@ class perceptionNODE():
         """Lane detection callback
         """
         self._image = self.bridge.imgmsg_to_cv2(msg)
+
     def send_perceptionInfo(self, scene):
         
         """
@@ -193,6 +195,7 @@ class perceptionNODE():
         command = json.loads(msg.data)
         #command = msg.data
         print(command)
+
     
 if __name__ == "__main__":
     perNod = perceptionNODE()

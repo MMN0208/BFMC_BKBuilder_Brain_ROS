@@ -44,7 +44,6 @@ if __name__ == '__main__':
     # [0, 350], [640, 350], [400, 50], [100, 50]
     while True:
         try:
-            time.sleep(0.05)
             flag, frame = video.read()
             if flag:
                 
@@ -56,9 +55,13 @@ if __name__ == '__main__':
                 # plt.imsave(SAVE_DIR + 'bev.jpeg', calibrate_img)
                 # plt.imshow(calibrate_img)
                 # plt.show()
-                detection_results = camera._runDetectLane(calibrate_img)    #   TEST
-                plottable = detection_results['lane_img']
-                # print(plottable) 
+                test_result, detection_results = camera._runDetectLane(calibrate_img)    #   TEST
+                plottable = detection_results['thresh']
+
+                steer = detection_results['steer_angle']
+                print("Angle = {}".format(steer))
+                
+                 
                 cv.imshow("Detection", plottable)                           #TEST
                 ######################### TESTING   #########################
                 # output = camera.laneDetector.processor.process(calibrate_img)

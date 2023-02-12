@@ -1,3 +1,4 @@
+import math
 import cv2 as cv
 import numpy as np
 # import matplotlib.pyplot as plt
@@ -82,7 +83,7 @@ class Camera():
                 if ret == True:
                     self.objpoints.append(objp)
                     self.imgpoints.append(corners)
-            print(self.objpoints, self.imgpoints)
+            # print(self.objpoints, self.imgpoints)
             results = dict()
             results['ret'], results['mtx'], results['dist'], results['rvecs'], results['tvecs'] = \
                                 cv.calibrateCamera(self.objpoints, self.imgpoints, gray.shape[::-1], None, None)
@@ -128,7 +129,7 @@ class Camera():
             right_line_allx = nonzerox[right_lane_inds]
             right_line_ally = nonzeroy[right_lane_inds]
 
-            print("Left and right all x: {} {}".format(left_line_allx, right_line_allx)) 
+            # print("Left and right all x: {} {}".format(left_line_allx, right_line_allx)) 
             # Discard lane detections that have very little points, 
             # as they tend to have unstable results in most cases
             if len(left_line_allx) <= 500 or len(right_line_allx) <= 500:
@@ -190,6 +191,7 @@ class Camera():
         right_lane_inds = []
         left_lane_coor = None
         right_lane_coor = None
+
         if self.left_lane.detected and self.right_lane.detected:  # Perform margin search if exists prior success.
         
             # Margin Search
@@ -217,6 +219,7 @@ class Camera():
             # Update the lane detections
             self.validate_lane_update(img, left_lane_inds, right_lane_inds)
 
+        
 
         results['out_img'] = out_img
         results['left_lane_inds'] = left_lane_inds
@@ -224,15 +227,15 @@ class Camera():
         results['left_lane_type'] = 1
         results['right_lane_type'] = 0
         results['radius'] = self.get_radiusCurvature()
-        results['steer_angle'] = self.get_steerAngle()
+        
         # print("Left lane coordinates: {}".format(left_lane_coor))
         # print("Right lane coordinates: {}".format(right_lane_coor))
         return results 
 
-    def get_steerAngle(self):
+    # def get_steerAngle(self):
 
-        radius = self.get_radiusCurvature()
-        steer_angle = random.randint(-20, 20)
+    #     radius = self.get_radiusCurvature()
+    #     steer_angle = random.randint(-20, 20)
 
     def get_radiusCurvature(self):
         radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
@@ -264,7 +267,7 @@ class Camera():
         left_fit = self.left_lane.best_fit
         right_fit = self.right_lane.best_fit
         
-        print("Left fit and right fit when draw lines: {} {}".format(left_fit, right_fit))
+        # print("Left fit and right fit when draw lines: {} {}".format(left_fit, right_fit))
 
         if left_fit is not None and right_fit is not None:
             left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
@@ -275,7 +278,7 @@ class Camera():
             pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
             pts = np.hstack((pts_left, pts_right))
             
-            print("Pts in draw lane = {}".format(pts))
+            # print("Pts in draw lane = {}".format(pts))
             # Draw the lane onto the warped blank image
             cv.fillPoly(color_warp, np.int_([pts]), (64, 224, 208))
             
@@ -292,9 +295,7 @@ class Camera():
 
     def generate_output(self, warped, threshold_img, polynomial_img, lane_img):
 
-        print("Warped: {}\nThreshold: {}\nPoly: {}\nLane:{}".format(
-            warped.shape, threshold_img.shape, polynomial_img.shape, lane_img.shape
-        ))
+        
         fontScale=1
         thickness=2
         fontFace = cv.FONT_HERSHEY_PLAIN
@@ -323,6 +324,41 @@ class Camera():
         
         return out_img 
     
+    def angleCalculator(self, img_angle):
+
+        angleDegree = 0
+        img_angle = cv.resize(img_angle, (144, 144))
+        center_x, center_y = self.computeCenter(img_angle)
+
+        if center_x != 0 or center_y != 0:
+            slope = (center_x - 72) / float (center_y - 144) # (72, 144) is center of (144, 144) image
+            angleRadian = float(math.atan(slope))
+            angleDegree = float(angleRadian * 180.0 / math.pi)
+
+        return angleDegree
+    
+    def computeCenter(self, roadImg):
+
+        roadImg = roadImg.astype(np.int32)
+        roadImg = roadImg * 255 
+        count = 0
+        center_x = 0
+        center_y = 0
+        for i in range(0, 144):
+            for j in range(0, 144):
+                if roadImg[i][j] >= 200:
+                    count += 1
+                    center_x += j
+                    center_y += i
+    
+
+        if center_x != 0 or center_y != 0 or count != 0:
+            center_x = center_x / count
+            center_y = center_y / count
+
+        return center_x, center_y
+
+
     def _runDetectLane(self, img):
 
         preprocess_results= self.laneDetector.processor.process(img)
@@ -330,11 +366,13 @@ class Camera():
         thresh = preprocess_results['thresh']
         inverse_transform = preprocess_results['inverse_transform']
 
-
         find_lane_result = self.find_lanes(thresh)
         output_img = find_lane_result['out_img']
-        
 
+        steer_angle = self.angleCalculator(thresh)
+        find_lane_result['thresh'] = thresh
+        find_lane_result['steer_angle'] = steer_angle
+        
         ################## Visualization #################
         lane_img = self.draw_lane(img, thresh, inverse_transform)
         finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
@@ -347,6 +385,6 @@ class Camera():
         test_results['lane_img'] = lane_img
         test_results['finalImg'] = finalImg
 
-        return test_results, find_lane_result
-            # return finalImg
+        return test_results, find_lane_result       # Test results
+        return find_lane_result
         

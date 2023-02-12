@@ -26,18 +26,18 @@ TESTNODES['HBR'] = 50                            #   height bottom right
 #####################   END TEST CONFIG  ########################
 
 ##################  HELPER FUNCTIONS    ###########################
-# def extract_frames(video_path, NUM_FRAMES, OFFSET):
+def extract_frames(video_path, NUM_FRAMES, OFFSET):
 
-#     video = cv.VideoCapture(video_path)
-#     current_frame = 0
-#     while True:
-#         flag, frame = video.read()
+    video = cv.VideoCapture(video_path)
+    current_frame = 0
+    while True:
+        flag, frame = video.read()
 
-#         if flag and current_frame < NUM_FRAMES:
-#             cv.imwrite(IMG_DIR+ '/frame_'+str(current_frame+1) + '.png', frame)
-#             current_frame += OFFSET 
-#         else:
-#             break
+        if flag :
+            cv.imwrite(IMG_DIR+ '/frame_'+str(current_frame+1) + '.png', frame)
+            current_frame += OFFSET 
+        else:
+            break
 
 def save_pkl(pickle_file, path):
     try:
@@ -109,28 +109,28 @@ def four_point_transform(image, pts):
 	M = cv.getPerspectiveTransform(rect, dst)
 	warped = cv.warpPerspective(image, M, (maxWidth, maxHeight))
 	# return the warped image
-	return warped
+	return warped, dst
 class Trackbars:
 
     def __init__(self):
-        # self.initPointTrackings([0, 299, 0, 270])
+        self.initPointTrackings([0, 299, 0, 270])
 		
         self.initSrcTracking()
         self.initSrcView()
         self.initDstView()
-        
+
     def initSrcView(self, width = 640, height = 360):
         cv.namedWindow('SrcView')
         cv.resizeWindow("SrcView", 360, 240)
         
-        cv.createTrackbar("WTL", "SrcView", 0, width , self.doNothing)			# 	width top left
-        cv.createTrackbar("HTL", "SrcView", 299, height, self.doNothing)		# 	height top left
+        cv.createTrackbar("WTL", "SrcView", 249 ,width , self.doNothing)			# 	width top left
+        cv.createTrackbar("HTL", "SrcView", 123, height, self.doNothing)		# 	height top left
         cv.createTrackbar("WBL", "SrcView", 0, width , self.doNothing)			#	width bottom leftj
-        cv.createTrackbar("HBL", 'SrcView', 270, height, self.doNothing)		#	height bottom left
-        cv.createTrackbar('WTR', 'SrcView', 0, width , self.doNothing)			#	width top right
-        cv.createTrackbar('HTR', 'SrcView', 0, height , self.doNothing)			#	height top right
-        cv.createTrackbar('WBR', 'SrcView', 0, width , self.doNothing)			#	width bottom right
-        cv.createTrackbar('HBR', 'SrcView', 0, height , self.doNothing)			#	height bottom right
+        cv.createTrackbar("HBL", 'SrcView', 315, height, self.doNothing)		#	height bottom left
+        cv.createTrackbar('WTR', 'SrcView', 428, width , self.doNothing)			#	width top right
+        cv.createTrackbar('HTR', 'SrcView', 130, height , self.doNothing)			#	height top right
+        cv.createTrackbar('WBR', 'SrcView', 626, width , self.doNothing)			#	width bottom right
+        cv.createTrackbar('HBR', 'SrcView', 318, height , self.doNothing)			#	height bottom right
         
          
     def initDstView(self, width = 640, height = 360):
@@ -157,7 +157,8 @@ class Trackbars:
         htr = cv.getTrackbarPos('HTR', 'SrcView')
         wbr = cv.getTrackbarPos('WBR', 'SrcView')
         hbr = cv.getTrackbarPos('HBR', 'SrcView')
-        srcPts = np.array([[wbl, hbl], [wbr, hbr], [wtr, htr], [wtl, htl]], dtype=np.float32)
+        srcPts= np.array([[wbl, hbl], [wbr, hbr], [wtr, htr], [wtl, htl]], dtype=np.float32)
+        # srcPts = np.array([[wtl, htl], [wtr, htr], [wbr, hbr], [wbl, hbl]], dtype=np.float32)
         return srcPts, [(wbl, hbl), (wtr, htr)]
 	
     def getDstView(self):
