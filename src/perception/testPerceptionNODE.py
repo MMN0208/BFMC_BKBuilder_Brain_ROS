@@ -16,6 +16,7 @@ class testPerceptionNODE():
         self.lane_subscriber = rospy.Subscriber("/automobile/lane", perception, self.testTopicLane)
         self.lane_info_subcriber = rospy.Subscriber("/automobile/lane_info",lane, self.testTopicLaneInfo)
         self.BEV_subscriber = rospy.Subscriber("/automobile/bev", Image, self.testBEV)
+        self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
     def run(self):       
         rospy.loginfo("Hello from testPerceptionNODE")
         rospy.spin()  
@@ -31,6 +32,9 @@ class testPerceptionNODE():
         print(type(msg))
         time.sleep(1)
     def testBEV(self,msg):
+        print(type(msg))
+        time.sleep(1)
+    def _lane(self,msg):
         print(type(msg))
         time.sleep(1)
         

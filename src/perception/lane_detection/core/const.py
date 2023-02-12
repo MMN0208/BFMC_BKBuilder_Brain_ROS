@@ -1,7 +1,7 @@
 import numpy as np
-from utils import Trackbars 
-
-trackers = Trackbars()
+#from .utils import Trackbars 
+import sys
+#trackers = Trackbars()
 params_processing = dict()
 params_lane_detection = dict()
 
