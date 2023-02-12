@@ -5,7 +5,7 @@ from const import SAVE_DIR
 from utils import load_pkl, save_pkl
 from laneDetect import LaneDetection
 from collections import deque
-
+import random
 class Lane:
 
     def __init__(self, maxSamples=4):
@@ -188,7 +188,8 @@ class Camera():
         out_img = None
         left_lane_inds = []
         right_lane_inds = []
-
+        left_lane_coor = None
+        right_lane_coor = None
         if self.left_lane.detected and self.right_lane.detected:  # Perform margin search if exists prior success.
         
             # Margin Search
@@ -198,7 +199,9 @@ class Camera():
             left_lane_inds = margin_search_result['left_lane_inds']
             right_lane_inds = margin_search_result['right_lane_inds']
             out_img = margin_search_result['out_img']
-            
+
+            left_lane_coor = margin_search_result['left']
+            right_lane_coor = margin_search_result['right'] 
             # Update the lane detections
             self.validate_lane_update(img, left_lane_inds, right_lane_inds)
         else:  
@@ -208,16 +211,33 @@ class Camera():
             left_lane_inds = window_search_result['left_lane_inds']
             right_lane_inds = window_search_result['right_lane_inds']
             out_img = window_search_result['out_img']
+
+            left_lane_coor = window_search_result['left']
+            right_lane_coor = window_search_result['right']
             # Update the lane detections
             self.validate_lane_update(img, left_lane_inds, right_lane_inds)
-        
+
+
         results['out_img'] = out_img
         results['left_lane_inds'] = left_lane_inds
         results['right_lane_inds'] = right_lane_inds
-        
+        results['left_lane_type'] = 1
+        results['right_lane_type'] = 0
+        results['radius'] = self.get_radiusCurvature()
+        results['steer_angle'] = self.get_steerAngle()
+        # print("Left lane coordinates: {}".format(left_lane_coor))
+        # print("Right lane coordinates: {}".format(right_lane_coor))
         return results 
-        
-       
+
+    def get_steerAngle(self):
+
+        radius = self.get_radiusCurvature()
+        steer_angle = random.randint(-20, 20)
+
+    def get_radiusCurvature(self):
+        radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
+        return radius_of_curvature
+    
     def write_stats(self, img):
         
         font = cv.FONT_HERSHEY_PLAIN
@@ -225,11 +245,11 @@ class Camera():
         weight = 2
         color = (255,255,255)
         
-        radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
+        radius_of_curvature = self.get_radiusCurvature()    
         cv.putText(img,'Lane Curvature Radius: '+ '{0:.2f}'.format(radius_of_curvature)+'m',(30,60), font, size, color, weight)
 
         if (self.left_lane.line_base_pos >=0):
-            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(self.left_lane.line_base_pos*100)+'cm'+ ' Right of Center',(30,100), font, size, color, weight)
+            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(self.right_lane.line_base_pos*100)+'cm'+ ' Right of Center',(30,100), font, size, color, weight)
         else:
             cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(abs(self.left_lane.line_base_pos)*100)+'cm' + ' Left of Center',(30,100), font, size, color, weight)
     
@@ -255,6 +275,7 @@ class Camera():
             pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
             pts = np.hstack((pts_left, pts_right))
             
+            print("Pts in draw lane = {}".format(pts))
             # Draw the lane onto the warped blank image
             cv.fillPoly(color_warp, np.int_([pts]), (64, 224, 208))
             
@@ -312,9 +333,12 @@ class Camera():
 
         find_lane_result = self.find_lanes(thresh)
         output_img = find_lane_result['out_img']
-        print("Here")
+        
+
+        ################## Visualization #################
         lane_img = self.draw_lane(img, thresh, inverse_transform)
         finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
+        ##################################################
 
         """Testing"""
 
@@ -323,6 +347,6 @@ class Camera():
         test_results['lane_img'] = lane_img
         test_results['finalImg'] = finalImg
 
-        return test_results
+        return test_results, find_lane_result
             # return finalImg
         

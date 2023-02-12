@@ -41,6 +41,7 @@ from utils.msg      import perception, lane
 import numpy as np
 import cv2
 from lane_detection.core.utils import TESTNODES
+from lane_detection.core.camera import Camera
 #import lane detection
 class perceptionNODE():
     def __init__(self):
@@ -93,6 +94,8 @@ class perceptionNODE():
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
 
         #=======LANE DETECTION======="""s
+        self.camera = Camera()
+        self._image = None
         self.lane_publisher = rospy.Publisher("/automobile/lane", perception, queue_size =1)
         self.bev_publisher = rospy.Publisher("/automobile/bev", Image, queue_size = 1)
         self.lane_info_publisher = rospy.Publisher("/automobile/lane_info",lane, queue_size = 1)
@@ -103,17 +106,18 @@ class perceptionNODE():
         rospy.loginfo("starting perceptionNODE")
         #rospy.spin() 
         while not rospy.is_shutdown():
-            self.send_perceptionInfo()
-            self.send_laneInfo()
+            self.send_perceptionInfo(self._image)
+            self.send_laneInfo(self._image)
             self.send_BEV()
     # ===================================== LANE DETECT ========================================
     
     def _lane(self, msg):
         """Lane detection callback
         """
+        self._image = cv2.imread(msg)
         
         
-    def send_perceptionInfo(self):
+    def send_perceptionInfo(self, scene):
         
         """
         Send message via topic "automobile/lane"
@@ -125,17 +129,19 @@ class perceptionNODE():
             int8 left_lane_type
             int8 right_lane_type
             int32 midpoint
+
+            left_lane_type, right_lane_type, radius, steer_angle
         """
+
+        lane_detection_result = self.camera._runDetectLane(scene)
         msg = perception()
-        msg.steer_angle =   TESTNODES['STEER_ANGLE']
-        msg.radius_of_curvature = TESTNODES['RADIUS']
-        msg.off_centre = TESTNODES['OFF_CENTRE']
-        msg.left_lane_type = TESTNODES['LLT']
-        msg.left_lane_type = TESTNODES['RLT']
-        msg.midpoint = TESTNODES['MIDPOINT']
+        msg.steer_angle             = lane_detection_result['steer_angle']
+        msg.radius_of_curvature     = lane_detection_result['radius'] 
+        msg.left_lane_type          =   lane_detection_result['left_lane_type'] 
+        msg.left_lane_type          =    lane_detection_result['right_lane_type'] 
         self.lane_publisher.publish(msg)
 
-    def send_laneInfo(self):
+    def send_laneInfo(self, scene):
         """
         Send message via topic "automobile/lane_info"
         

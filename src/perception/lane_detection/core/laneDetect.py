@@ -148,7 +148,8 @@ class LaneDetection:
             result['left_lane_inds'] = left_lane_inds 
             result['right_lane_inds'] = right_lane_inds 
             result['out_img'] = out_img
-            
+            result['right'] = right
+            result['left'] = left
             return result
         
         except Exception as e:
@@ -225,7 +226,8 @@ class LaneDetection:
             ret['out_img'] = out_img
             ret['left_lane_inds'] = left_lane_inds
             ret['right_lane_inds'] = right_lane_inds 
-
+            ret['right'] = right
+            ret['left'] = left
             return ret
         
         except Exception as e:
@@ -273,7 +275,7 @@ class LaneDetection:
         pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
         pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
         pts = np.hstack((pts_left, pts_right))
-
+ 
         mean_x = np.mean((left_fitx, right_fitx), axis=0)
         pts_mean = np.array([np.flipud(np.transpose(np.vstack([mean_x, ploty])))])
 

@@ -2,8 +2,7 @@ import cv2 as cv
 import numpy as np
 import pickle
 import sys
-sys.path.append('.')
-from .const import *
+from const import *
 # from numba import float32, uint16
 
 ##################  TEST CONFIG #################################
