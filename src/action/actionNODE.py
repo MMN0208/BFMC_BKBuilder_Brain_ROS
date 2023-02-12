@@ -14,12 +14,32 @@ from enum import Enum
 from control import controlNODE
 
 # =============================== CONFIG =================================================
-testRUNING          =  True
-testWAITING         =  True 
+testRUNNING         =  True
+testWAITING         =  True
+testPARKING         =  True
 
-class State(Enum):
-    NOT_RUNNING = 0
-    RUNNING = 1
+# =============================== BUFFER =================================================
+#imu buffer
+imu_buffer0 = 0
+imu_buffer1 = 0
+imu_buffer2 = 0
+
+# =============================== GLOBAL VARIABLES =======================================
+#traffic_sign
+traffic_sign = "NO_SIGN"
+
+#traffic_light
+traffic_light = False
+light_color = Traffic_Light_Rule.GREEN_LIGHT
+
+#pedestrian
+wait_for_pedestrian = False
+pedestrian = False
+
+
+class SystemStates(Enum):
+    OFFLINE = 0
+    ONLINE = 1
 
 class RunStates(Enum):
     RUNNING = 0
@@ -36,7 +56,7 @@ class RunStates(Enum):
     PRIORITY = 11
     STOP = 12
     
-class TrafficSign:
+class TrafficSign(Enum):
     #STOP, parking place, crosswalk, priority road, highway entrance, highway exit, roundabout, one-way road, and no-entry road. 
     STOP_SIGN = 0
     PARKING_SIGN = 1
@@ -67,25 +87,24 @@ class actionNODE:
     def __init__(self) -> None:
         rospy.init_node('actionNODE', anonymous=False)
         self.lane_subscriber = rospy.Subscriber("/automobile/lane", String, self.lane_check)
-        self.object_subscriber = rospy.Subscriber("/automobile/object", String, self.check_state2)
+        self.pedestrian_subscriber = rospy.Subscriber("/automobile/pedestrian", String, self.pedestrian_check)
         self.traffic_sign_subscriber = rospy.Subscriber("/automobile/traffic_sign", String, self.traffic_sign_check)
         self.v2v_subscriber = rospy.Subscriber("/automobile/vehicles", vehicles, self.check_state3)
-        self.traffic_light = rospy.Subscriber("/automobile/traffic_light", vehicles, self.traffic_light_check)
-        self.imu = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
-        self.server = rospy.Subscriber("/automobile/server",Server,self.check_server)
+        self.traffic_light_subscriber = rospy.Subscriber("/automobile/traffic_light", vehicles, self.traffic_light_check)
+        self.imu_subscriber = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
+        self.server_subscriber = rospy.Subscriber("/automobile/server",Server,self.check_server)
         #MORE SUBSCRIBING IF AVAILABLE
         
         #INIT STATE
         # self.init = 1
         # self.start_signal = 0
-        # self.state = State.NOT_RUNNING
+        # self.state = State.OFFLINE
         # self.run_state = RunStates.GO_STRAIGHT
         # self.traffic_light = Traffic_Light_Rule.GREEN_LIGHT
         # self.flags = None
         # self.control = controlNODE()
         self.init = 1
         self.start_signal = 0
-        self.traffic_sign = NO_SIGN
         self.lane = LanePosition.RIGHT_LANE
         self.speed_mod = SpeedMod.NORMAL
         self.lane_switchable = False
@@ -126,55 +145,65 @@ class actionNODE:
                 self.lane_switchable = False
                 
         self.steer_angle = msg.steer_angle
+        
+    def pedestrian_check(self, msg):
+        pedestrian = msg.pedestrian
     
     def traffic_sign_check(self, msg):
-        if msg.traffic_sign_type == "STOP_SIGN":
-            self.traffic_sign = TrafficSign.STOP_SIGN
-            if run_state==RunStates.RUNNING:
+        traffic_sign = msg.traffic_sign_type
+        
+        if self.traffic_sign == TrafficSign.STOP_SIGN:
+            # self.traffic_sign = TrafficSign.STOP_SIGN
+            if run_state == RunStates.RUNNING:
                 self.sign_start_time = rospy.get_time()
                 self.run_state = RunStates.WAIT
                 
-        elif msg.traffic_sign_type == "PARKING_SIGN":
-            self.traffic_sign = TrafficSign.PARKING_SIGN
-            if run_state==RunStates.RUNNING:
+        elif self.traffic_sign == TrafficSign.PARKING_SIGN:
+            # self.traffic_sign = TrafficSign.PARKING_SIGN
+            if run_state == RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.traffic_sign_type == "CROSS_WALK":
-            self.traffic_sign = TrafficSign.CROSS_WALK
-            if run_state==RunStates.RUNNING:
+        elif self.traffic_sign == TrafficSign.CROSS_WALK:
+            # self.traffic_sign = TrafficSign.CROSS_WALK
+            if run_state == RunStates.RUNNING:
+                self.speed_mod = SpeedMod.LOW
+                self.run_state = RunStates.CROSS_WALK
+        
+        elif self.traffic_sign == TrafficSign.PRIORITY_SIGN:
+            # self.traffic_sign = TrafficSign.PRIORITY_SIGN
+            if run_state == RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
                 
-        elif msg.traffic_sign_type == "PRIORITY_SIGN":
-            self.traffic_sign = TrafficSign.PRIORITY_SIGN
-            if run_state==RunStates.RUNNING:
-                self.run_state = RunStates.WAIT
-                
-        elif msg.traffic_sign_type == "HIGHWAY_ENTRANCE_SIGN"
-            self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
-            if run_state==RunStates.RUNNING:
+        elif self.traffic_sign == TrafficSign.HIGHWAY_ENTRANCE_SIGN:
+            # self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
+            if run_state == RunStates.RUNNING:
                 self.speed_mod = SpeedMod.HIGH
                 self.run_state = RunStates.HIGHWAY
                 
-        elif msg.traffic_sign_type == "HIGHWAY_EXIT_SIGN"
-            self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
+        elif self.traffic_sign == TrafficSign.HIGHWAY_EXIT_SIGN:
+            # self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
             if run_state==RunStates.HIGHWAY:
                 self.speed_mod = SpeedMod.NORMAL
                 self.run_state = RunStates.RUNNING
                 
-        elif msg.traffic_sign_type == "ROUNDABOUT_SIGN"
-            self.traffic_sign = TrafficSign.ROUNDABOUT_SIGN
-            if run_state==RunStates.RUNNING:
-                self.run_state = RunStates.WAIT
+        elif self.traffic_sign == TrafficSign.ROUNDABOUT_SIGN:
+            # self.traffic_sign = TrafficSign.ROUNDABOUT_SIGN
+            if run_state == RunStates.RUNNING:
+                self.run_state = RunStates.ROUNDABOUT
                 
-        elif msg.traffic_sign_type == "ONE_WAY_SIGN"
-            self.traffic_sign = TrafficSign.ONE_WAY_SIGN
-            if run_state==RunStates.RUNNING:
-                self.run_state = RunStates.WAIT
+        elif self.traffic_sign == TrafficSign.ONE_WAY_SIGN:
+            # self.traffic_sign = TrafficSign.ONE_WAY_SIGN
+            if run_state == RunStates.RUNNING:
+                print("One way road")
                 
-        elif msg.traffic_sign_type == "NO_ENTRY_SIGN"
-            self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
+        elif self.traffic_sign == TrafficSign.NO_ENTRY_SIGN:
+            # self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
+            if run_state == RunStates.RUNNING:
+                print("Can not go this way")
+        
+        elif self.traffic_sign == TrafficSign.NO_SIGN:
+            if run_state != RunStates.RUNNING:
+                self.run_state = RunStates.RUNNING
                 
     def traffic_light_check(self, msg):
         print("Hello")
@@ -210,18 +239,28 @@ class actionNODE:
         
     def wait_action(self):
         if  (    
-            (traffic_light and light_color == TrafficLightColor.GREEN_LIGHT) or 
-            (stop_sign     and rospy.get_time() - self.sign_start_time >= 3) or
-            (pedestrian    and pedestrian_detection == PedestrianPosition.LEFT)
+            (traffic_light == True                 and light_color == TrafficLightColor.GREEN_LIGHT) or 
+            (traffic_sign == TrafficSign.STOP_SIGN and rospy.get_time() - self.sign_start_time >= 3) or
+            (wait_for_pedestrian == True           and pedestrian == False)
         ):
+        wait_for_pedestrian = False
+        self.speed_mod = SpeedMod.NORMAL
         self.lock_state(RunStates.RUNNING)
             
     def speed_action(self): # called in state == RAMP and HIGHWAY
         self.control.setSpeed(self.base_speed * self.speed_mod)
+        
+    def cross_walk_action(self):
+        if pedestrian == False:
+            self.speed_action()
+        else:
+            wait_for_pedestrian = True
+            self.run_state = RunStates.WAIT
             
     def auto_control(self):
-        if testRUNING:
+        if testRUNNING:
             if self.run_state == RunStates.RUNNING:
+                self.running_action()
         if testWAITING:
             if self.run_state == RunStates.WAIT:
                 self.wait_action()
@@ -230,9 +269,9 @@ class actionNODE:
         while not rospy.is_shutdown() and start: 
             while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
                 print("Waiting for start signal")
-            if(self.state == State.NOT_RUNNING):
+            if(self.state == State.OFFLINE):
                 print("DOING NOTHING")
-            elif(self.state == State.RUNNING):
+            elif(self.state == State.ONLINE):
                 auto_control()
                 
 if __name__ == "__main__":
@@ -241,7 +280,7 @@ if __name__ == "__main__":
     #         while not rospy.is_shutdown() and start: 
     #             while not start: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
     #                 print("Waiting for green")        
-    #             if(self.state == State.NOT_RUNNING):
+    #             if(self.state == State.OFFLINE):
     #                 print("DOING NOTHING")
     #             elif(self.state == State.RUNNING):
     #                 auto_control()       
@@ -319,7 +358,7 @@ if __name__ == "__main__":
     #         while not rospy.is_shutdown() and start: 
     #             while not start: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
     #                 print("Waiting for green")        
-    #             if(self.state == State.NOT_RUNNING):
+    #             if(self.state == State.OFFLINE):
     #                 print("DOING NOTHING")
     #             elif(self.state == State.RUNNING):
     #                 auto_control()
