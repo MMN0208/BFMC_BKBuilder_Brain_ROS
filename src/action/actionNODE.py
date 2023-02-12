@@ -41,7 +41,7 @@ class TrafficSign(Enum):
     #STOP, parking place, crosswalk, priority road, highway entrance, highway exit, roundabout, one-way road, and no-entry road. 
     STOP_SIGN = 0
     PARKING_SIGN = 1
-    CROSS_WALK = 2
+    CROSS_WALK_SIGN = 2
     PRIORITY_SIGN = 3
     HIGHWAY_ENTRANCE_SIGN = 4
     HIGHWAY_EXIT_SIGN = 5
@@ -74,6 +74,7 @@ testTRAFFICSIGN     =  False
 testCROSSWALK       =  True
 DEBUG               =  True
 DEBUG_ANGLE         =  False
+DEBUG_MOD_SPEED     =  True
 
 # =============================== BUFFER =================================================
 #imu buffer
@@ -113,7 +114,7 @@ class actionNODE:
         self.speed_mod = SpeedMod.NORMAL
         self.lane_switchable = False
         self.sign_start_time = 0
-        self.base_speed = 0.1
+        self.base_speed = 0.15
         self.steer_angle = 0
         self.lock = 0
         self.unlock = 1
@@ -129,9 +130,9 @@ class actionNODE:
             self.lock_start_time = time.time()
             self.run_state = state
         
-    def unlock_state(self, time):
+    def unlock_state(self, duration):
         if self.lock:
-            if (time.time() - self.lock_start_time) >= time:
+            if (time.time() - self.lock_start_time) >= duration:
                 self.unlock = 1
                 self.lock = 0
                 
@@ -157,60 +158,64 @@ class actionNODE:
     def traffic_sign_check(self, msg):
         global traffic_sign_type
         traffic_sign_type = msg.traffic_sign_type
+        self.unlock_state(1)
         
         if DEBUG:
             print("traffic_sign callback, sign: ", traffic_sign_type, ", run_state: ", self.run_state)
         
-        if traffic_sign_type == TrafficSign.STOP_SIGN.value:            
-            if self.run_state == RunStates.RUNNING:
-                self.sign_start_time = time.time()
-                if DEBUG:
-                    print("STOP SIGN")
-                self.run_state = RunStates.WAIT
-                
-        elif traffic_sign_type == TrafficSign.PARKING_SIGN:
-            if self.run_state == RunStates.RUNNING:
-                self.run_state = RunStates.PARKING
-                
-        elif traffic_sign_type == TrafficSign.CROSS_WALK.value:
-            # traffic_sign_type = TrafficSign.CROSS_WALK
-            if self.run_state == RunStates.RUNNING:
-                self.speed_mod = SpeedMod.LOW
-                self.run_state = RunStates.CROSS_WALK
-        
-        elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
-            # traffic_sign_type = TrafficSign.PRIORITY_SIGN
-            if self.run_state == RunStates.RUNNING:
-                self.run_state = RunStates.WAIT
-                
-        elif traffic_sign_type == TrafficSign.HIGHWAY_ENTRANCE_SIGN.value:
-            if self.run_state == RunStates.RUNNING:
-                self.speed_mod = SpeedMod.HIGH
-                self.run_state = RunStates.HIGHWAY
-                
-        elif traffic_sign_type == TrafficSign.HIGHWAY_EXIT_SIGN.value:
-            if self.run_state==RunStates.HIGHWAY:
-                self.speed_mod = SpeedMod.NORMAL
-                self.run_state = RunStates.RUNNING
-                
-        elif traffic_sign_type == TrafficSign.ROUNDABOUT_SIGN.value:
-            # traffic_sign_type = TrafficSign.ROUNDABOUT_SIGN
-            if self.run_state == RunStates.RUNNING:
-                self.run_state = RunStates.ROUNDABOUT
-                
-        elif traffic_sign_type == TrafficSign.ONE_WAY_SIGN.value:
-            # traffic_sign_type = TrafficSign.ONE_WAY_SIGN
-            if self.run_state == RunStates.RUNNING:
-                print("One way road")
-                
-        elif traffic_sign_type == TrafficSign.NO_ENTRY_SIGN.value:
-            # traffic_sign_type = TrafficSign.NO_ENTRY_SIGN
-            if self.run_state == RunStates.RUNNING:
-                print("Can not go this way")
-        
-        elif traffic_sign_type == TrafficSign.NO_SIGN.value:
-            if self.run_state != RunStates.RUNNING:
-                self.run_state = RunStates.RUNNING
+        if self.unlock:
+            if traffic_sign_type == TrafficSign.STOP_SIGN.value:            
+                if self.run_state == RunStates.RUNNING:
+                    self.sign_start_time = time.time()
+                    if DEBUG:
+                        print("STOP SIGN")
+                    self.run_state = RunStates.WAIT
+                    
+            elif traffic_sign_type == TrafficSign.PARKING_SIGN:
+                if self.run_state == RunStates.RUNNING:
+                    self.run_state = RunStates.PARKING
+                    
+            elif traffic_sign_type == TrafficSign.CROSS_WALK_SIGN.value:
+                # traffic_sign_type = TrafficSign.CROSS_WALK
+                if self.run_state == RunStates.RUNNING:
+                    if DEBUG:
+                        print("Running slow towards CROSSWALK")
+                    self.speed_mod = SpeedMod.LOW
+                    self.run_state = RunStates.CROSSWALK
+            
+            elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
+                # traffic_sign_type = TrafficSign.PRIORITY_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    self.run_state = RunStates.WAIT
+                    
+            elif traffic_sign_type == TrafficSign.HIGHWAY_ENTRANCE_SIGN.value:
+                if self.run_state == RunStates.RUNNING:
+                    self.speed_mod = SpeedMod.HIGH
+                    self.run_state = RunStates.HIGHWAY
+                    
+            elif traffic_sign_type == TrafficSign.HIGHWAY_EXIT_SIGN.value:
+                if self.run_state==RunStates.HIGHWAY:
+                    self.speed_mod = SpeedMod.NORMAL
+                    self.run_state = RunStates.RUNNING
+                    
+            elif traffic_sign_type == TrafficSign.ROUNDABOUT_SIGN.value:
+                # traffic_sign_type = TrafficSign.ROUNDABOUT_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    self.run_state = RunStates.ROUNDABOUT
+                    
+            elif traffic_sign_type == TrafficSign.ONE_WAY_SIGN.value:
+                # traffic_sign_type = TrafficSign.ONE_WAY_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    print("One way road")
+                    
+            elif traffic_sign_type == TrafficSign.NO_ENTRY_SIGN.value:
+                # traffic_sign_type = TrafficSign.NO_ENTRY_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    print("Can not go this way")
+            
+            elif traffic_sign_type == TrafficSign.NO_SIGN.value:
+                if self.run_state != RunStates.RUNNING:
+                    self.run_state = RunStates.RUNNING
                 
     def traffic_light_check(self, msg):
         print("Hello")
@@ -236,10 +241,12 @@ class actionNODE:
                 
     def running_action(self):
         self.control.setSteer(self.steer_angle)
-        OFFSET_ANGLE = 20
-        MOD = 10
-        offset_speed = abs((abs(self.steer_angle) - OFFSET_ANGLE)) // MOD
-        if offset_speed > 0:
+        OFFSET_ANGLE = 0.05
+        # MOD = 10
+        offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
+        if DEBUG_MOD_SPEED:
+            print("offset speed: ",offset_speed)
+        if (self.base_speed - offset_speed) > 0:
             self.control.setSpeed(self.base_speed - offset_speed)
         else:
             self.speed_action()
@@ -247,6 +254,7 @@ class actionNODE:
     def wait_action(self):
         global traffic_sing_type
         global traffic_light
+        global wait_for_pedestrian
         if DEBUG:   
             print(traffic_sign_type)
         if  (    
@@ -298,7 +306,7 @@ class actionNODE:
                     print("SPEED")
                 self.speed_action()
         if testCROSSWALK:
-            if self.run_state == RunStates.CROSS_WALK:
+            if self.run_state == RunStates.CROSSWALK:
                 if DEBUG:
                     print("CROSS_WALK")
                 self.cross_walk_action()
