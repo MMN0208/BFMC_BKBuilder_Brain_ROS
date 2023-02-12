@@ -11,6 +11,7 @@ from sensor_msgs.msg import Image, String
 from utils.msg import vehicles
 from enum import Enum
 
+from action import trafficsignNODE
 from control import controlNODE
 
 # =============================== CONFIG =================================================
@@ -73,6 +74,7 @@ class actionNODE:
         self.traffic_light = rospy.Subscriber("/automobile/traffic_light", vehicles, self.traffic_light_check)
         self.imu = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
         self.server = rospy.Subscriber("/automobile/server",Server,self.check_server)
+        self.traffic_sign = traffic_signNODE()
         #MORE SUBSCRIBING IF AVAILABLE
         
         #INIT STATE
@@ -132,21 +134,25 @@ class actionNODE:
             self.traffic_sign = TrafficSign.STOP_SIGN
             if run_state==RunStates.RUNNING:
                 self.sign_start_time = rospy.get_time()
+                self.traffic_sign.stop_sign()
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign == 3: #"PARKING_SIGN":
             self.traffic_sign = TrafficSign.PARKING_SIGN
             if run_state==RunStates.RUNNING:
+                self.traffic_sign.parking_sign()
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign == 0: #"CROSS_WALK":
             self.traffic_sign = TrafficSign.CROSS_WALK
             if run_state==RunStates.RUNNING:
+                self.traffic_sign.cross_walk()
                 self.run_state = RunStates.WAIT
                 
-        elif msg.traffic_sign == 0: #"PRIORITY_SIGN":
+        elif msg.traffic_sign == 4: #"PRIORITY_SIGN":
             self.traffic_sign = TrafficSign.PRIORITY_SIGN
             if run_state==RunStates.RUNNING:
+                self.traffic_sign.priority_road_sign()
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign == "HIGHWAY_ENTRANCE_SIGN"
@@ -164,16 +170,19 @@ class actionNODE:
         elif msg.traffic_sign == 7: #"ROUNDABOUT_SIGN"
             self.traffic_sign = TrafficSign.ROUNDABOUT_SIGN
             if run_state==RunStates.RUNNING:
+                self.traffic_sign.roundabout_sign()
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign == 2: #"ONE_WAY_SIGN"
             self.traffic_sign = TrafficSign.ONE_WAY_SIGN
             if run_state==RunStates.RUNNING:
+                self.traffic_sign.one_way_sign()
                 self.run_state = RunStates.WAIT
                 
         elif msg.traffic_sign == 1: #"NO_ENTRY_SIGN"
             self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
             if run_state==RUNNING:
+                self.traffic_sign.no_entry_sign()
                 self.run_state = RunStates.WAIT
                 
     def traffic_light_check(self, msg):
