@@ -14,7 +14,22 @@ class trafficsignNODE():
         traffic_sign = msg.traffic_sign_type
 
         if traffic_sign == 6: #detech a STOP sign
+<<<<<<< HEAD
             stop_sign()
+=======
+            self.control.setSpeed(0.1)
+            time.sleep(3)
+            print("Stop at least 3 seconds") 
+            self.control.brake(0) # ???
+            start_time = time.time()
+            print(start_time)
+            while((time.time() - start_time) < 3):
+                print(time.time()) 
+            print("3 seconds passed")
+            self.control.setSpeed(0.1)
+            time.sleep(2)
+            self.control.brake(0)
+>>>>>>> 783e0c434b4df65d2c2738986e5438902783392b
 
         elif traffic_sign == 3: #packing place
             print("pass")
