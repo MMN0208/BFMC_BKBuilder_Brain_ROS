@@ -49,7 +49,7 @@ class trafficsignNODE():
             self.control.setSteer(0)
             self.control.setSpeed(0.3)
 
-        elif traffic_sign == 7 #roundabout
+        elif traffic_sign == 7: #roundabout
             self.control.setSteer(23)
             self.control.moveForward(0.2,0.1)
             self.control.setSteer(-23)
@@ -69,7 +69,8 @@ class trafficsignNODE():
 
     def run(self):
         rospy.loginfo('starting trafficsignNODE')
-        self._read()
+        #self._read()
+        rospy.spin()
         
     def _read(self):
         while not rospy.is_shutdown():
