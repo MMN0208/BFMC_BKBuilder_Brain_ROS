@@ -70,8 +70,7 @@ testWAITING         =  True
 testPARKING         =  True
 testSPEED           =  True
 testTRAFFICLIGHT    =  False
-testTRAFFICSIGN     =  False
-DEBUG               =  True
+testCROSSWALK       =  True
 
 # =============================== BUFFER =================================================
 #imu buffer
@@ -302,6 +301,11 @@ class actionNODE:
                 if DEBUG: 
                     print("SPEED")
                 self.speed_action()
+        if testCROSSWALK:
+            if self.run_state == RunStates.CROSS_WALK:
+                if DEBUG:
+                    print("CROSS_WALK")
+                self.cross_walk_action()
         
     def run(self):
         while not rospy.is_shutdown(): 
