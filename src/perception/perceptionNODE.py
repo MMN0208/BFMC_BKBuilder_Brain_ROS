@@ -94,7 +94,7 @@ class perceptionNODE():
         #self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
         #=======LANE DETECTION======="""s
-        #self.camera = Camera()
+        self.camera = Camera()
         self._image = None
         self.lane_publisher = rospy.Publisher("/automobile/lane", perception, queue_size =1)
         self.bev_publisher = rospy.Publisher("/automobile/bev", Image, queue_size = 1)
@@ -104,11 +104,12 @@ class perceptionNODE():
         """Apply the initializing methods and start the threads
         """
         rospy.loginfo("starting perceptionNODE")
-        rospy.spin() 
-        # while not rospy.is_shutdown():
-        #     self.send_BEV()
-        #     self.send_perceptionInfo(self._image)
-        #     self.send_laneInfo(self._image)
+        #rospy.spin() 
+        while not rospy.is_shutdown():
+            if self._image is not None:
+                #self.send_BEV()
+                self.send_perceptionInfo(self._image)
+                self.send_laneInfo(self._image)
     # ===================================== LANE DETECT ========================================
     
     def _lane(self, msg):
@@ -132,7 +133,7 @@ class perceptionNODE():
             left_lane_type, right_lane_type, radius, steer_angle
         """
 
-        _,lane_detection_result = self.camera._runDetectLane(scene)
+        lane_detection_result = self.camera._runDetectLane(scene)
         msg = perception()
         msg.steer_angle             = lane_detection_result['steer_angle']
         msg.radius_of_curvature     = lane_detection_result['radius'] 

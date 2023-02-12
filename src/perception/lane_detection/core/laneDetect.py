@@ -1,6 +1,6 @@
 import cv2 as cv
-from preprocess import  Preprocessor
-from const import *
+from .preprocess import  Preprocessor
+from .const import *
 
 class LaneDetection:
 
@@ -85,7 +85,7 @@ class LaneDetection:
             leftx_current = leftx_base
             rightx_current = rightx_base
             
-            print("Left base: {}\nRight base: {}\nMid point: {}".format(leftx_base, rightx_base, midpoint))
+            #print("Left base: {}\nRight base: {}\nMid point: {}".format(leftx_base, rightx_base, midpoint))
 
             #### START - Loop to iterate through windows and search for lane lines #####
             for window in range(nwindows):
@@ -179,7 +179,7 @@ class LaneDetection:
             _left_fit = np.polyfit(lefty, leftx, 2)
             _right_fit = np.polyfit(righty, rightx, 2)
 
-            print(_left_fit, _right_fit)
+            #print(_left_fit, _right_fit)
 
             ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0])
             left_fitx = _left_fit[0]*ploty**2 + _left_fit[1]*ploty + _left_fit[2]
@@ -260,32 +260,6 @@ class LaneDetection:
             curve_direction = 'Straight'
 
         return (left_curverad + right_curverad) / 2.0, curve_direction
-    
-    def draw_lane_lines(self, original_image, warped_image, Minv, draw_info):
-
-        leftx = draw_info['leftx']
-        rightx = draw_info['rightx']
-        left_fitx = draw_info['left_fitx']
-        right_fitx = draw_info['right_fitx']
-        ploty = draw_info['ploty']
-
-        warp_zero = np.zeros_like(warped_image).astype(np.uint8)
-        color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
-
-        pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
-        pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
-        pts = np.hstack((pts_left, pts_right))
- 
-        mean_x = np.mean((left_fitx, right_fitx), axis=0)
-        pts_mean = np.array([np.flipud(np.transpose(np.vstack([mean_x, ploty])))])
-
-        cv.fillPoly(color_warp, np.int32([pts]), (0, 255, 0))
-        cv.fillPoly(color_warp, np.int32([pts_mean]), (0, 255, 255))
-
-        newwarp = cv.warpPerspective(color_warp, Minv, (original_image.shape[1], original_image.shape[0]))
-        result = cv.addWeighted(original_image, 1, newwarp, 0.3, 0)
-
-        return pts_mean, result
     
     def offCenter(self, meanPts, inpFrame):
 

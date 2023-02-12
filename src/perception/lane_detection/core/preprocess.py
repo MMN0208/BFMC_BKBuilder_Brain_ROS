@@ -1,8 +1,8 @@
 import cv2 as cv
 import numpy as np
-import matplotlib.pyplot as plt
-from const import *
-from utils import Trackbars
+#import matplotlib.pyplot as plt
+from .const import *
+from .utils import Trackbars
 class Preprocessor:
 
     """ This class is used to preprocessing the scene which is input steamed from camera.
@@ -65,7 +65,7 @@ class Preprocessor:
         self.sobel_kernel_size = params_processing['sobel_kernel_size'] 
         self.lower_white = params_processing['lower_white']
         self.upper_white = params_processing['upper_white']
-        self.tracker = Trackbars()
+        #self.tracker = Trackbars()
         print("Init processing images")
         
 

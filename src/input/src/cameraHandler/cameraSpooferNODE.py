@@ -42,15 +42,16 @@ from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
 
 class cameraSpooferNODE():
-    def __init__(self, ext = '.mp4'):
+    def __init__(self, ext = '.avi'):
         """Node used for spoofing a camera/ publishing a video stream from a folder 
         with videos
         """
         # params
-        self.videoSize = (640,480)
+        self.videoSize = (640,360)
         
-        self.videoDir = "/"
+        self.videoDir = "/home/pi/Bosch-Future-Mobility-BKBUILDER/testvideo/vid1/"
         self.videos = self.open_files(self.videoDir, ext = ext)
+        print(self.videos)
         
         rospy.init_node('cameraSpooferNODE', anonymous=False)
         self.image_publisher = rospy.Publisher("/automobile/image_raw", Image, queue_size=60)

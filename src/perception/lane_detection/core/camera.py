@@ -2,11 +2,15 @@ import math
 import cv2 as cv
 import numpy as np
 # import matplotlib.pyplot as plt
-from const import SAVE_DIR
-from utils import load_pkl, save_pkl
-from laneDetect import LaneDetection
+from .const import SAVE_DIR
+from .utils import load_pkl, save_pkl
+from .laneDetect import LaneDetection
 from collections import deque
 import random
+
+####CONFIG DEBUG
+DEBUG_VISUAL = False
+
 class Lane:
 
     def __init__(self, maxSamples=4):
@@ -374,17 +378,18 @@ class Camera():
         find_lane_result['steer_angle'] = steer_angle
         
         ################## Visualization #################
-        lane_img = self.draw_lane(img, thresh, inverse_transform)
-        finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
+        if DEBUG_VISUAL:
+            lane_img = self.draw_lane(img, thresh, inverse_transform)
+            finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
         ##################################################
 
         """Testing"""
-
-        test_results = dict()
-        test_results['out_img'] = output_img
-        test_results['lane_img'] = lane_img
-        test_results['finalImg'] = finalImg
-
-        return test_results, find_lane_result       # Test results
+        if DEBUG_VISUAL:
+            test_results = dict()
+            test_results['out_img'] = output_img
+            test_results['lane_img'] = lane_img
+            test_results['finalImg'] = finalImg
+            return test_results, find_lane_result       # Test results
+        
         return find_lane_result
         
