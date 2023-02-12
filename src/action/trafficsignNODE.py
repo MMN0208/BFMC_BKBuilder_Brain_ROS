@@ -14,61 +14,78 @@ class trafficsignNODE():
         traffic_sign = msg.traffic_sign_type
 
         if traffic_sign == 6: #detech a STOP sign
-            self.control.setSpeed(0.1)
-            time.sleep(3)
-            print("Stop at least 3 seconds") 
-            self.control.brake(0) # ???
-            start_time = time.time()
-            print(start_time)
-            while((time.time() - start_time) < 3):
-                print(time.time()) 
-            print("3 seconds passed")
-            self.control.setSpeed(0.1)
-            time.sleep(2)
-            self.control.brake(0)
+            stop_sign()
 
         elif traffic_sign == 3: #packing place
             print("pass")
             #call parking funtion
 
         elif traffic_sign == 0: #crosswalk
-            print("Slow down")
-            #controlNODE().brake(0)
-            #time.sleep(1)
-            self.control.setSpeed(0.1)
-            time.sleep(2)
-            #after pass the crosswalk -> then what(go straight)
-            self.control.setSpeed(0.2)
-            time.sleep(1)
-            self.control.brake(0)
+            cross_walk()
 
         elif traffic_sign == 4: #priority road
             print("Do not stop at intesection")
             #intersction -> cross walk -> 1: move forward || 2: turn right/left
-            self.control.moveForward(0.3, 0.3)
+            priority_road_sign()
 
 
         elif traffic_sign ==  2: #one way road
-            print("go straight")
-            self.control.setSpeed(0.3)
+            one_way_sign()
 
         elif traffic_sign == 1: #no entry road
             print("turn other way")
-            self.control.setSteer(23)
-            self.control.moveForward(0.3, 0.3)
-            self.control.setSteer(0)
-            self.control.setSpeed(0.3)
+            no_entry_sign()
 
         elif traffic_sign == 7: #roundabout
-            self.control.setSteer(23)
-            self.control.moveForward(0.2,0.1)
-            self.control.setSteer(-23)
-            self.control.moveForward(0.2,0.1)
-            self.control.setSteer(10)
-            self.control.moveForward(0.2,0.1)
-            self.control.setSteer(0)
-            self.control.setSpeed(0.3)
+            roundabout_sign()
 
+    def cross_walk(self): #0
+        print("Slow down")
+        self.control.setSpeed(0.1)
+        time.sleep(2)
+        self.control.setSpeed(0.2)
+        time.sleep(1)
+        self.control.brake(0)
+
+    def no_entry_sign(self): #1
+        self.control.setSteer(23)
+        self.control.moveForward(0.3, 0.3)
+        self.control.setSteer(0)
+        self.control.setSpeed(0.3)
+
+    def one_way_sign(self): #2
+        self.control.setSpeed(0.2)
+
+    def parking_sign(self): #3
+        print("pass")
+
+    def priority_road_sign(self): #4
+        self.control.moveForward(0.3, 0.3)
+
+
+    def stop_sign(self): #6
+        self.control.setSpeed(0.1)
+        time.sleep(3)
+        print("Stop at least 3 seconds") 
+        self.control.brake(0) # ???
+        start_time = time.time()
+        print(start_time)
+        while((time.time() - start_time) < 3):
+            print(time.time()) 
+        print("3 seconds passed")
+        self.control.setSpeed(0.1)
+        time.sleep(2)
+        self.control.brake(0)
+    
+    def roundabout_sign(self):
+        self.control.setSteer(23)
+        self.control.moveForward(0.2,0.1)
+        self.control.setSteer(-23)
+        self.control.moveForward(0.2,0.1)
+        self.control.setSteer(10)
+        self.control.moveForward(0.2,0.1)
+        self.control.setSteer(0)
+        self.control.setSpeed(0.3)
         
 
     def __init__(self): 
