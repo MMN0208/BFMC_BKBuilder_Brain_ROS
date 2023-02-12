@@ -1,0 +1,3 @@
+<launch>
+    <node pkg="action"     type="actionNODE.py"                name="actionNODE"            output="screen"     cwd="node"/>
+</launch>

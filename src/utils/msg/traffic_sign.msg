@@ -1,0 +1,1 @@
+uint8 traffic_sign_type
