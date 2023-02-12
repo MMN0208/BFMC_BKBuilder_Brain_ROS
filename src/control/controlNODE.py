@@ -11,13 +11,16 @@ from utils.srv        import subscribing, subscribingResponse
 class controlNODE():
     def __init__(self):
         
-        rospy.init_node('controlNODE', anonymous=False)
+       #rospy.init_node('controlNODE', anonymous=False)
         
         self.command_publisher = rospy.Publisher("/automobile/command", String, queue_size=5)
             
         time.sleep(1)
         self.activatePID(True)
         
+        time.sleep(1)
+        self.activatePID(True)
+            
     def activatePID(self, activate=True):
         _activate = {
                 "action": "4",
