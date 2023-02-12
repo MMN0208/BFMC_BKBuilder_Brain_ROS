@@ -14,11 +14,18 @@ class trafficsignNODE():
         traffic_sign = msg.traffic_sign_type
 
         if traffic_sign == 6: #detech a STOP sign
+            self.control.setSpeed(0.1)
+            time.sleep(3)
             print("Stop at least 3 seconds") 
             self.control.brake(0) # ???
             start_time = time.time()
-            while((time.time() - start_time) > 3):
-                pass   
+            print(start_time)
+            while((time.time() - start_time) < 3):
+                print(time.time()) 
+            print("3 seconds passed")
+            self.control.setSpeed(0.1)
+            time.sleep(2)
+            self.control.brake(0)
 
         elif traffic_sign == 3: #packing place
             print("pass")
@@ -27,10 +34,13 @@ class trafficsignNODE():
         elif traffic_sign == 0: #crosswalk
             print("Slow down")
             #controlNODE().brake(0)
-            #sleep(1)
+            #time.sleep(1)
             self.control.setSpeed(0.1)
+            time.sleep(2)
             #after pass the crosswalk -> then what(go straight)
-            self.control.setSpeed(0.3, 0.3)
+            self.control.setSpeed(0.2)
+            time.sleep(1)
+            self.control.brake(0)
 
         elif traffic_sign == 4: #priority road
             print("Do not stop at intesection")
