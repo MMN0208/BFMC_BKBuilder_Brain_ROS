@@ -177,13 +177,13 @@ class actionNODE:
             if self.run_state == RunStates.RUNNING:
                 self.run_state = RunStates.PARKING
                 
-        elif traffic_sign_type == TrafficSign.CROSS_WALK:
+        elif traffic_sign_type == TrafficSign.CROSS_WALK.value:
             # traffic_sign_type = TrafficSign.CROSS_WALK
             if self.run_state == RunStates.RUNNING:
                 self.speed_mod = SpeedMod.LOW
                 self.run_state = RunStates.CROSS_WALK
         
-        elif traffic_sign_type == TrafficSign.PRIORITY_SIGN:
+        elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
             # traffic_sign_type = TrafficSign.PRIORITY_SIGN
             if self.run_state == RunStates.RUNNING:
                 self.run_state = RunStates.WAIT
@@ -200,22 +200,22 @@ class actionNODE:
                 self.speed_mod = SpeedMod.NORMAL
                 self.run_state = RunStates.RUNNING
                 
-        elif traffic_sign_type == TrafficSign.ROUNDABOUT_SIGN:
+        elif traffic_sign_type == TrafficSign.ROUNDABOUT_SIGN.value:
             # traffic_sign_type = TrafficSign.ROUNDABOUT_SIGN
             if self.run_state == RunStates.RUNNING:
                 self.run_state = RunStates.ROUNDABOUT
                 
-        elif traffic_sign_type == TrafficSign.ONE_WAY_SIGN:
+        elif traffic_sign_type == TrafficSign.ONE_WAY_SIGN.value:
             # traffic_sign_type = TrafficSign.ONE_WAY_SIGN
             if self.run_state == RunStates.RUNNING:
                 print("One way road")
                 
-        elif traffic_sign_type == TrafficSign.NO_ENTRY_SIGN:
+        elif traffic_sign_type == TrafficSign.NO_ENTRY_SIGN.value:
             # traffic_sign_type = TrafficSign.NO_ENTRY_SIGN
             if self.run_state == RunStates.RUNNING:
                 print("Can not go this way")
         
-        elif traffic_sign_type == TrafficSign.NO_SIGN:
+        elif traffic_sign_type == TrafficSign.NO_SIGN.value:
             if self.run_state != RunStates.RUNNING:
                 self.run_state = RunStates.RUNNING
                 
