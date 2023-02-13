@@ -2,7 +2,7 @@ import time
 import cv2 as cv
 from preprocess import Preprocessor
 from laneDetect import LaneDetection
-from camera import Camera
+from camera import Camera, DEBUG_VISUAL
 from utils import *
 from const import *
 import glob
@@ -28,6 +28,7 @@ def draw_points(img, points):
     except Exception as e:
         print(e)
 
+
 if __name__ == '__main__':
 
     # extract_frames(VIDEO_PATH, NUM_FRAMES, OFFSET)
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     video.set(cv.CAP_PROP_FPS, 10)
     camera = Camera()
     camera.load_calibrate_info(CALIBRATE_PICKLE)
-    
+
     # [0, 350], [640, 350], [400, 50], [100, 50]
     while True:
         try:
@@ -55,13 +56,27 @@ if __name__ == '__main__':
                 # plt.imsave(SAVE_DIR + 'bev.jpeg', calibrate_img)
                 # plt.imshow(calibrate_img)
                 # plt.show()
-                test_result, detection_results = camera._runDetectLane(calibrate_img)    #   TEST
+
+                if DEBUG_VISUAL:
+                    test_result, preprocess_results, detection_results = camera._runDetectLane(calibrate_img)    #   TEST
+                else:
+                    detection_results = camera._runDetectLane(calibrate_img)
+
                 plottable = detection_results['thresh']
 
                 steer = detection_results['steer_angle']
                 print("Angle = {}".format(steer))
                 
-                 
+                if DEBUG_VISUAL:
+                    test_img = np.zeros((720, 1280))
+                    transform_mat = preprocess_results['transformed_view']
+                    inverse_mat = preprocess_results['inverse_transform']
+                    birdeye = preprocess_results['birdeye_img']
+                    humanview = cv.warpPerspective(birdeye, inverse_mat, (640, 360))
+
+
+                    # cv.imshow("BEV", birdeye)
+                    # cv.imshow("Normal View", humanview)
                 cv.imshow("Detection", plottable)                           #TEST
                 ######################### TESTING   #########################
                 # output = camera.laneDetector.processor.process(calibrate_img)
