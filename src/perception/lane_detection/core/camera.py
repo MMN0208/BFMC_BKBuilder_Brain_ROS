@@ -7,6 +7,8 @@ from utils import load_pkl, save_pkl
 from laneDetect import LaneDetection
 from collections import deque
 import random
+
+DEBUG_VISUAL = True
 class Lane:
 
     def __init__(self, maxSamples=4):
@@ -191,6 +193,7 @@ class Camera():
         right_lane_inds = []
         left_lane_coor = None
         right_lane_coor = None
+        results['angle_change'] = False
 
         if self.left_lane.detected and self.right_lane.detected:  # Perform margin search if exists prior success.
         
@@ -198,27 +201,33 @@ class Camera():
             left_fit = self.left_lane.current_fit
             right_fit = self.right_lane.current_fit       
             margin_search_result = self.laneDetector.margin_search(img, left_fit, right_fit)
-            left_lane_inds = margin_search_result['left_lane_inds']
-            right_lane_inds = margin_search_result['right_lane_inds']
-            out_img = margin_search_result['out_img']
+            
+            if margin_search_result is not None:
+                left_lane_inds = margin_search_result['left_lane_inds']
+                right_lane_inds = margin_search_result['right_lane_inds']
+                out_img = margin_search_result['out_img']
 
-            left_lane_coor = margin_search_result['left']
-            right_lane_coor = margin_search_result['right'] 
-            # Update the lane detections
+                left_lane_coor = margin_search_result['left']
+                right_lane_coor = margin_search_result['right']
+                # Update the lane detections
             self.validate_lane_update(img, left_lane_inds, right_lane_inds)
+            results['angle_change'] = True
+
         else:  
             # Perform a full window search if no prior successful detections.
             # Window Search
             window_search_result = self.laneDetector.slide_window_search(img)
-            left_lane_inds = window_search_result['left_lane_inds']
-            right_lane_inds = window_search_result['right_lane_inds']
-            out_img = window_search_result['out_img']
 
-            left_lane_coor = window_search_result['left']
-            right_lane_coor = window_search_result['right']
-            # Update the lane detections
-            self.validate_lane_update(img, left_lane_inds, right_lane_inds)
+            if window_search_result is not None:
+                left_lane_inds = window_search_result['left_lane_inds']
+                right_lane_inds = window_search_result['right_lane_inds']
+                out_img = window_search_result['out_img']
 
+                left_lane_coor = window_search_result['left']
+                right_lane_coor = window_search_result['right']
+                # Update the lane detections
+                self.validate_lane_update(img, left_lane_inds, right_lane_inds)
+                results['angle_change'] = True
         
 
         results['out_img'] = out_img
@@ -369,22 +378,27 @@ class Camera():
         find_lane_result = self.find_lanes(thresh)
         output_img = find_lane_result['out_img']
 
-        steer_angle = self.angleCalculator(thresh)
+        
         find_lane_result['thresh'] = thresh
-        find_lane_result['steer_angle'] = steer_angle
+        find_lane_result['steer_angle'] = random.randint(-1, 1)
+
+        if find_lane_result['angle_change']:
+            steer_angle = self.angleCalculator(thresh)
+            find_lane_result['steer_angle'] = steer_angle
         
         ################## Visualization #################
-        lane_img = self.draw_lane(img, thresh, inverse_transform)
-        finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
+        # lane_img = self.draw_lane(img, thresh, inverse_transform)
+        # finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
         ##################################################
 
         """Testing"""
 
         test_results = dict()
         test_results['out_img'] = output_img
-        test_results['lane_img'] = lane_img
-        test_results['finalImg'] = finalImg
+        # test_results['lane_img'] = lane_img
+        # test_results['finalImg'] = finalImg
 
-        return test_results, find_lane_result       # Test results
+        if DEBUG_VISUAL:
+            return test_results, preprocess_results, find_lane_result       # Test results
         return find_lane_result
         
