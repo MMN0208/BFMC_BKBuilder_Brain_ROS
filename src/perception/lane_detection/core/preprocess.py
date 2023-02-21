@@ -100,7 +100,7 @@ class Preprocessor:
         H, W, C = img.shape
 
         src = params_processing['src_points']
-        # src = self.tracker.getValPoints()
+        # dst = self.tracker.getValPoints()
         dst = params_processing['dst_points']
         transform_view = cv.getPerspectiveTransform(src, dst)
         inverse_transform_view = cv.getPerspectiveTransform(dst, src)

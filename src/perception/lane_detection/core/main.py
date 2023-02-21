@@ -79,11 +79,15 @@ if __name__ == '__main__':
                     # cv.imshow("Normal View", humanview)
                 cv.imshow("Detection", plottable)                           #TEST
                 ######################### TESTING   #########################
-                # output = camera.laneDetector.processor.process(calibrate_img)
-                # thresh = output['birdeye_img']
                 
+                # output = camera.laneDetector.processor.process(calibrate_img)
+                # while True:
+                #     output = camera.laneDetector.processor.process(calibrate_img)
+                #     thresh = output['birdeye_img'] 
+                #     cv.imshow('Thresh', thresh)
+                #     cv.waitKey(1)
                 # # # cv.imshow('points', points_img)
-                # cv.imshow('Thresh', thresh)
+                
                 # # cv.imshow('Detection', detection_img)
                 #############################################################
                 # cv.imshow('Main', output['birdeye']['birdeye'])

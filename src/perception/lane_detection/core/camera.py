@@ -186,7 +186,7 @@ class Camera():
             print(e)
 
     def find_lanes(self, img):
-
+        print("image size: {}".format(img.shape))
         results = dict()
         out_img = None
         left_lane_inds = []
