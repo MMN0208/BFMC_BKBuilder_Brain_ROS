@@ -1,3 +1,4 @@
 <launch>
-    <node pkg="input"   type = "cameraSpooferNODE.py"   name="cameraSpooferNODE"              output="screen"/>
+    <node pkg="input"   type =  "cameraDealerNODE.py"   name = "cameraDeadlerNODE"            output="screen"/>
+    <node pkg="input"   type = "cameraNODE.py"          name = "cameraNODE"                     output = "screen"/>
 </launch>

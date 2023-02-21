@@ -41,7 +41,7 @@ from utils.msg      import perception, lane
 #import object detection
 import numpy as np
 import cv2
-from lane_detection.core.utils import TESTNODES
+from lane_detection.core.utils import TESTNODES, IMG_SIZE
 from lane_detection.core.camera import Camera
 #import lane detection
 class perceptionNODE():
@@ -103,13 +103,18 @@ class perceptionNODE():
     def run(self):
         """Apply the initializing methods and start the threads
         """
+        
         rospy.loginfo("starting perceptionNODE")
         #rospy.spin() 
         while not rospy.is_shutdown():
-            if self._image is not None:
-                #self.send_BEV()
-                self.send_perceptionInfo(self._image)
-                self.send_laneInfo(self._image)
+            try:
+                if self._image is not None:
+                    #self.send_BEV()
+                    self.send_perceptionInfo(self._image)
+                    self.send_laneInfo(self._image)
+                    print('hello world')
+            except Exception as e:
+                print(e)
     # ===================================== LANE DETECT ========================================
     
     def _lane(self, msg):
@@ -132,8 +137,9 @@ class perceptionNODE():
 
             left_lane_type, right_lane_type, radius, steer_angle
         """
-
+        calibrate_scence = self.camera.undistort(scene)
         lane_detection_result = self.camera._runDetectLane(scene)
+        print("Detection results: {}".format(lane_detection_result))
         msg = perception()
         msg.steer_angle             = lane_detection_result['steer_angle']
         msg.radius_of_curvature     = lane_detection_result['radius'] 

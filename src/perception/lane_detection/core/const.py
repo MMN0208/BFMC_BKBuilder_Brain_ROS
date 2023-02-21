@@ -11,15 +11,20 @@ VIDEO_PATH = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/percep
 SAVE_DIR = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/core/save' 
 CAL_IMG_DIR = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/calibrate_imgs' 
 CALIBRATE_PICKLE = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/core/save/calibration.pkl'
-IMG_SIZE  = (640, 360)
+IMG_SIZE  = (640, 368)
 IMG_DIR = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/frame_test'
 IMG_SRC = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/frame_test/frame_1001.png' 
 
 W, H = IMG_SIZE
-wTop =  489 
+wTop =  530 
 hTop =  0    
-wBot =  153
+wBot =  137
 hBot =  360
+
+# wTop = 426
+# hTop = 0
+# wBot = 169
+# hBot = 360
 """ ======================= PROCESSING PARAMS ===================================="""
 params_processing['gaussian_kernel_size'] = 5
 params_processing['sobel_kernel_size'] = 3
