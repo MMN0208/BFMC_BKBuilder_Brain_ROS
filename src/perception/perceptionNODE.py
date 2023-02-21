@@ -95,6 +95,7 @@ class perceptionNODE():
         self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
         #=======LANE DETECTION======="""s
         self.camera = Camera()
+        self.camera.load_calibrate_info('/home/pi/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/core/save/calibration.pkl')
         self._image = None
         self.lane_publisher = rospy.Publisher("/automobile/lane", perception, queue_size =1)
         self.bev_publisher = rospy.Publisher("/automobile/bev", Image, queue_size = 1)
@@ -138,13 +139,19 @@ class perceptionNODE():
             left_lane_type, right_lane_type, radius, steer_angle
         """
         calibrate_scence = self.camera.undistort(scene)
-        lane_detection_result = self.camera._runDetectLane(scene)
-        print("Detection results: {}".format(lane_detection_result))
+        lane_detection_result = self.camera._runDetectLane(calibrate_scence)
         msg = perception()
-        msg.steer_angle             = lane_detection_result['steer_angle']
-        msg.radius_of_curvature     = lane_detection_result['radius'] 
-        msg.left_lane_type          =   lane_detection_result['left_lane_type'] 
-        msg.left_lane_type          =    lane_detection_result['right_lane_type'] 
+        if lane_detection_result is not None:
+            msg.steer_angle             = lane_detection_result['steer_angle']
+            msg.radius_of_curvature     = lane_detection_result['radius'] 
+            msg.left_lane_type          =   lane_detection_result['left_lane_type'] 
+            msg.left_lane_type          =    lane_detection_result['right_lane_type']
+        else:
+            
+            msg.steer_angle             = 0
+            msg.radius_of_curvature     = -1
+            msg.left_lane_type          = 0
+            msg.left_lane_type          = 0
         self.lane_publisher.publish(msg)
 
     def send_laneInfo(self, scene):

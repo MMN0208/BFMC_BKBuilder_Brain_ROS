@@ -248,9 +248,10 @@ class Camera():
     #     steer_angle = random.randint(-20, 20)
 
     def get_radiusCurvature(self):
-        radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
-        return radius_of_curvature
-    
+        if self.left_lane.radius_of_curvature is not None and self.right_lane.radius_of_curvature is not None:
+            radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
+            return radius_of_curvature  
+        return -1
     def write_stats(self, img):
         
         font = cv.FONT_HERSHEY_PLAIN
