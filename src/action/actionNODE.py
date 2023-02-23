@@ -11,9 +11,9 @@ import rospy
 
 from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
-from std_msgs.msg    import String
-from utils.msg       import vehicles, traffic_sign, perception
-from enum import Enum
+from std_msgs.msg    import String, Byte
+from utils.msg       import vehicles, traffic_light, traffic_sign, perception
+from enum            import Enum
 
 from control.controlNODE import controlNODE
 
@@ -87,8 +87,9 @@ imu_buffer2 = 0
 traffic_sign_type = TrafficSign.NO_SIGN
 
 #traffic_light
-traffic_light = False
-light_color = TrafficLightRule.GREEN_LIGHT
+NUM_OF_TRAFFIC_LIGHTS = 4
+traffic_light_id = 0
+light_color = [0 for i in range(NUM_OF_TRAFFIC_LIGHTS)]
 
 #pedestrian
 wait_for_pedestrian = False
@@ -101,9 +102,15 @@ class actionNODE:
         self.pedestrian_subscriber = rospy.Subscriber("/automobile/pedestrian", String, self.pedestrian_check)
         self.traffic_sign_subscriber = rospy.Subscriber("/automobile/traffic_sign", traffic_sign, self.traffic_sign_check)
         # self.v2v_subscriber = rospy.Subscriber("/automobile/vehicles", vehicles, self.check_state3)
-        self.traffic_light_subscriber = rospy.Subscriber("/automobile/traffic_light", vehicles, self.traffic_light_check)
         # self.imu_subscriber = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
         # self.server_subscriber = rospy.Subscriber("/automobile/server",Server,self.check_server)
+        
+        # TRAFFIC_LIGHT SUBSCRIBERS
+        self.traffic_light_subscriber = rospy.Subscriber("/automobile/traffic_light", traffic_light, self.traffic_light_check)
+        self.Semaphoremaster_subscriber = rospy.Subscriber("/automobile/semaphore/master", Byte, self.semaphore_master_update)
+        self.Semaphoreslave_subscriber = rospy.Subscriber("/automobile/semaphore/slave", Byte, self.semaphore_slave_update)
+        self.Semaphoreantimaster_subscriber = rospy.Subscriber("/automobile/semaphore/antimaster", Byte, self.semaphore_antimaster_update)
+        self.Semaphorestart_subscriber = rospy.Subscriber("/automobile/semaphore/start", Byte, self.semaphore_start_update)
         #MORE SUBSCRIBING IF AVAILABLE
         
         #INIT STATE
@@ -153,6 +160,7 @@ class actionNODE:
         self.steer_angle = msg.steer_angle
         
     def pedestrian_check(self, msg):
+        global pedestrian
         pedestrian = msg.pedestrian
     
     def traffic_sign_check(self, msg):
@@ -171,7 +179,7 @@ class actionNODE:
                         print("STOP SIGN")
                     self.run_state = RunStates.WAIT
                     
-            elif traffic_sign_type == TrafficSign.PARKING_SIGN:
+            elif traffic_sign_type == TrafficSign.PARKING_SIGN.value:
                 if self.run_state == RunStates.RUNNING:
                     self.run_state = RunStates.PARKING
                     
@@ -218,7 +226,33 @@ class actionNODE:
                     self.run_state = RunStates.RUNNING
                 
     def traffic_light_check(self, msg):
-        print("Hello")
+        global traffic_light_id
+        traffic_light_id = msg.traffic_light_id
+        self.unlock_state(1)
+        
+        if DEBUG:
+            print("traffic_light callback, id: ", traffic_light_id)
+        
+        if self.unlock:
+            if traffic_light_id:
+                if self.run_state == RunStates.RUNNING:
+                    self.run_state = RunStates.TRAFFIC_LIGHT
+                    
+    def semaphore_master_update(self, msg):
+        global light_color
+        light_color[0] = msg.data
+        
+    def semaphore_slave_update(self, msg):
+        global light_color
+        light_color[1] = msg.data
+        
+    def semaphore_antimaster_update(self, msg):
+        global light_color
+        light_color[2] = msg.data
+        
+    def semaphore_start_update(self, msg):
+        global light_color
+        light_color[3] = msg.data
         
     def imu_check(self, msg):
         RAMP_HEIGHT = 15
@@ -253,12 +287,11 @@ class actionNODE:
         
     def wait_action(self):
         global traffic_sign_type
-        global traffic_light
+        global traffic_light_id
         global wait_for_pedestrian
-        if DEBUG:   
-            print(traffic_sign_type)
+        
         if  (    
-            (traffic_light == True                            and light_color == TrafficLightColor.GREEN_LIGHT) or 
+            (traffic_light_id                                 and light_color[traffic_light_id - 1] == TrafficLightRule.GREEN_LIGHT.value) or 
             (traffic_sign_type == TrafficSign.STOP_SIGN.value and (time.time() - self.sign_start_time) >= 3) or
             (wait_for_pedestrian == True                      and pedestrian == False)
         ):
@@ -281,11 +314,27 @@ class actionNODE:
         self.control.setSpeed(self.base_speed * speed_mod)
         
     def cross_walk_action(self):
+        global wait_for_pedestrian
+        global pedestrian
+        
         if pedestrian == False:
             self.speed_action()
         else:
             wait_for_pedestrian = True
             self.run_state = RunStates.WAIT
+            
+    def traffic_light_action(self):
+        global traffic_light_id
+        global light_color
+        
+        if DEBUG:
+            print(light_color[traffic_light_id - 1])
+        
+        if light_color[traffic_light_id - 1] == TrafficLightRule.RED_LIGHT.value or light_color[traffic_light_id - 1] == TrafficLightRule.YELLOW_LIGHT.value:
+            self.run_state = RunStates.WAIT
+        else:
+            self.speed_mod = SpeedMod.NORMAL
+            self.lock_state(RunStates.RUNNING)
             
     def auto_control(self):
         if testRUNNING:
@@ -310,6 +359,11 @@ class actionNODE:
                 if DEBUG:
                     print("CROSS_WALK")
                 self.cross_walk_action()
+        if testTRAFFICLIGHT:
+            if self.run_state == RunStates.TRAFFIC_LIGHT:
+                if DEBUG:
+                    print("TRAFFIC_LIGHT")
+                self.traffic_light_action()
         
     def run(self):
         while not rospy.is_shutdown(): 

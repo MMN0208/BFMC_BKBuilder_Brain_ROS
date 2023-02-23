@@ -53,6 +53,7 @@ add_message_files(
   pedestrian_output.msg
   IMU.msg
   localisation.msg
+  traffic_light.msg
   traffic_sign.msg
   vehicles.msg
   environmental.msg

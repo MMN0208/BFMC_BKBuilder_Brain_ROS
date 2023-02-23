@@ -49,7 +49,7 @@ class sim(Thread):
         
         # Communication parameters, create and bind socket
         self.PORT = 50007
-        self.BCAST_ADDRESS = '192.168.0.107'
+        self.BCAST_ADDRESS = '192.168.65.4'
 
         # Create a UDP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -120,7 +120,6 @@ class sim(Thread):
     #  @param          
     def sendState(self,id,state):
         """Method that sends the ID and semaphore state.
-
         :param ID: The semaphore ID
         :type ID: int
         :param state: The semaphore state (0 - RED, 1 - Yellow, 2 - Green)
@@ -145,7 +144,7 @@ def runAdvertiser():
     Adv.start()
     # Wait until 60 seconds passed
     while (time.time()-start_time < 60):
-        time.sleep(1)
+        time.sleep(0.5)
     # Stop the broadcaster
     Adv.stop()
 
