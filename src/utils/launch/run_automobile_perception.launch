@@ -1,4 +1,4 @@
 <launch>    
     <node pkg="input" type="cameraSpooferNODE.py" name ="cameraSpooferNODE" output="screen"/>
-    <node pkg="perception" type="perceptionNODE.py" 	name="perceptionNODE"  		output="screen"/>
+    <node pkg="perception" type="perceptionNODE.py" 	name="perceptionNODE"  		output="screen" cwd="node"/>
 </launch>

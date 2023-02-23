@@ -1,0 +1,5 @@
+<launch>    
+    <node pkg="input" type="cameraSpooferNODE.py" name ="cameraSpooferNODE" output="screen"/>
+    <node pkg="perception" type="objectNODE.py" 	name="objectNODE"  		output="screen" cwd="node"/>
+    <node pkg="action" type="pedestrianNODE.py" 	name="pedestrianNODE"  		output="screen" cwd="node"/>
+</launch>

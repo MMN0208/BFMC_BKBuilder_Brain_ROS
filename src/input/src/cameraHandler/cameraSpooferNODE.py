@@ -31,8 +31,10 @@
 import io
 import numpy as np
 import time
-import os
+
+import cv2
 import glob
+
 import rospy
 
 import glob
@@ -49,10 +51,9 @@ class cameraSpooferNODE():
         # params
         self.videoSize = (640,360)
         
-        self.videoDir = "/home/pi/Bosch-Future-Mobility-BKBUILDER/testvideo/vid1/"
+        self.videoDir = "/home/pi/BFMC_BKBuilder_Brain_ROS/video/"
         self.videos = self.open_files(self.videoDir, ext = ext)
         print(self.videos)
-        
         rospy.init_node('cameraSpooferNODE', anonymous=False)
         self.image_publisher = rospy.Publisher("/automobile/image_raw", Image, queue_size=60)
         
