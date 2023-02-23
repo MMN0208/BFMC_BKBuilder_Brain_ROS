@@ -140,6 +140,7 @@ class perceptionNODE():
         """
         calibrate_scence = self.camera.undistort(scene)
         lane_detection_result = self.camera._runDetectLane(calibrate_scence)
+        bev_img = lane_detection_result['BEV']
         msg = perception()
         if lane_detection_result is not None:
             msg.steer_angle             = lane_detection_result['steer_angle']
@@ -153,6 +154,7 @@ class perceptionNODE():
             msg.left_lane_type          = 0
             msg.left_lane_type          = 0
         self.lane_publisher.publish(msg)
+        self.send_BEV(bev_img)
 
     def send_laneInfo(self, scene):
         """
@@ -180,15 +182,15 @@ class perceptionNODE():
         msg.height_bottomright=TESTNODES['HBR']
         self.lane_info_publisher.publish(msg)
 
-    def send_BEV(self):
+    def send_BEV(self, img):
         """Birdeye view callback
         Send only one message type Image (please visit ROs documentation for more information about custom message type)
         
         Note: at this time just use pseudo messages defined in TESTNODES to test the publish() command
         """
-        image = TESTNODES['BEV']
+        
         #print("Image to be send: {}".format(type(image)))
-        send_image = self.bridge.cv2_to_imgmsg(image, '64FC3')
+        send_image = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
         self.bev_publisher.publish(send_image)
 
     # ===================================== READ ==========================================
