@@ -37,6 +37,9 @@ import glob
 
 import rospy
 
+import glob
+import cv2
+
 from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
 
@@ -46,13 +49,13 @@ class cameraSpooferNODE():
         with videos
         """
         # params
-        self.videoSize = (640,480)
+        self.videoSize = (640,360)
         
         self.videoDir = "/home/pi/BFMC_BKBuilder_Brain_ROS/video/"
         self.videos = self.open_files(self.videoDir, ext = ext)
         print(self.videos)
         rospy.init_node('cameraSpooferNODE', anonymous=False)
-        self.image_publisher = rospy.Publisher("/automobile/image_raw", Image, queue_size=1)
+        self.image_publisher = rospy.Publisher("/automobile/image_raw", Image, queue_size=60)
         
         self.bridge = CvBridge()
         
@@ -60,14 +63,13 @@ class cameraSpooferNODE():
     def run(self):
         """Apply the initializing methods and start the thread. 
         """
-        rospy.loginfo("starting camaeraSpooferNODE")
+        rospy.loginfo("starting cameraSpooferNODE")
         self._play_video(self.videos)
       
     # ===================================== INIT VIDEOS ==================================
     def open_files(self, inputDir, ext):
         """Open all files with the given path and extension
         """
-        
         files =  glob.glob(inputDir + '/*' + ext)  
         return files
 
@@ -92,6 +94,7 @@ class cameraSpooferNODE():
                             self.image_publisher.publish(imageObject)
                         except CvBridgeError as e:
                             print(e)
+                            print("\n err")
                                
                     else:
                         break

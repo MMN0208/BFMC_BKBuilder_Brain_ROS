@@ -29,6 +29,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE
 
 #import serial
+import math
 import json
 import time
 import rospy
@@ -37,7 +38,7 @@ from std_msgs.msg      import String
 from sensor_msgs.msg import Image
 from utils.srv        import subscribing, subscribingResponse
 from cv_bridge       import CvBridge
-
+from utils.msg      import perception, lane
 #import object detection
 import numpy as np
 import cv2
@@ -51,22 +52,40 @@ class perceptionNODE():
         """perceptionNODE is used to publish messages produced by
         the perception service including lane detection and object detection
 
-        Todo:
-            1. Create two publishers that publish two topics: "automobile/lane" and "automobile/object.
-                Then, subscribers that were defined in actionNODE can get messages for further processing.
-            
-            2. From the lane_detection and object_detection, we define some core functions to 
-                process scene and publish messages.
-            
-                2.1   Define function to send the bird eye view of the binary threshold.
-                        * Ref: /perception/lane_detection/laneDetection.py
-
-                2.2   Define function to send the radius of curvature of left and right lanes.
-                        * Ref: perception/lane_detection/camera.py
-
-                2.3   Define function to send the sign detection (class, bounding box).
-                        * Ref: perception/object_detection/DetectionProcess.py
+        Please checkout the ROS documentation for more information about the customized
+        messages because there are some topics's messages are not standardized.
         
+        To define nodes and their behaviors, we need to:
+            1. Define publishers in src/perception/perceptionNODE.py
+            2. Define msgs in src/utils/msg/lane.msg
+            3. Define launch information in src/utils/launch
+
+        * Definitions for several topics:
+
+            automobile/birdeyes_view: just send only one message type Image
+                msg_type: Image
+                msg_var_name: BEV_threshold : this is variable name used in the function self.send_BEV(msg)
+                publisher_name: BEV_publisher
+                callback_function_name: send_BEV()
+                example: self.BEV_publisher = rospy...
+
+            automobile/lane: send multiples messages with multiple types
+                msg_type: float32,  int8
+                msg_var_names:  these variables name below are used in the function self._lane() 
+                    float32: steer_angle
+                    float32: radius_of_curvature
+                    float32: off_centre
+                    int8: left_lane_type
+                    int8: right_lane_type
+                    int8: midpoint
+                publisher_name: lane_publisher
+                callback_function_name: _lane()
+                example: self.lane_publisher = rospy...
+            
+        *   IMPORTANT NOTE: 
+            We need to test two publishers that publish two topics "birdeyes_view" and "lane" by 
+            debugging when we try to send pseudo messages. Pseudo messages were defined in TESTNODES
+            that was included in the source file (please visit src/perception/lane_detection/core/utils.py for more details of TESTNODES).
 
         """
               
@@ -95,7 +114,18 @@ class perceptionNODE():
     def run(self):
         """Apply the initializing methods and start the threads
         """
+        
         rospy.loginfo("starting perceptionNODE")
+        #rospy.spin() 
+        while not rospy.is_shutdown():
+            try:
+                if self._image is not None:
+                    #self.send_BEV()
+                    self.send_perceptionInfo(self._image)
+                    self.send_laneInfo(self._image)
+                    print('hello world')
+            except Exception as e:
+                print(e)
         #self._read() 
         rospy.spin()   
     
@@ -130,16 +160,89 @@ class perceptionNODE():
         print("Frame done in {}".format(tinference+tnms))
      
     # ===================================== LANE DETECT ========================================
+    
     def _lane(self, msg):
         """Lane detection callback
         """
+        self._image = self.bridge.imgmsg_to_cv2(msg)
+
+    def send_perceptionInfo(self, scene):
+        
+        """
+        Send message via topic "automobile/lane"
+
+        Message format:
+            float32 steer_angle
+            float32 radius_of_curvature
+            float32 off_centre
+            int8 left_lane_type
+            int8 right_lane_type
+            int32 midpoint
+
+            left_lane_type, right_lane_type, radius, steer_angle
+        """
+        calibrate_scence = self.camera.undistort(scene)
+        lane_detection_result = self.camera._runDetectLane(calibrate_scence)
+        bev_img = lane_detection_result['BEV']
+        msg = perception()
+        if lane_detection_result is not None:
+            msg.steer_angle             = lane_detection_result['steer_angle']
+            msg.radius_of_curvature     = lane_detection_result['radius'] 
+            msg.left_lane_type          =   lane_detection_result['left_lane_type'] 
+            msg.left_lane_type          =    lane_detection_result['right_lane_type']
+        else:
+            
+            msg.steer_angle             = 0
+            msg.radius_of_curvature     = -1
+            msg.left_lane_type          = 0
+            msg.left_lane_type          = 0
+        self.lane_publisher.publish(msg)
+        self.send_BEV(bev_img)
+
+    def send_laneInfo(self, scene):
+        """
+        Send message via topic "automobile/lane_info"
+        
+        Message format
+            float32: width_topleft
+            float32: height_topleft
+            float32: width_topright
+            float32: heigth_topright
+            float32: width_bottomleft
+            float32: height_bottomleft
+            float32: width_bottomright
+            float32: heigth_bottomright
+
+        """
+        msg = lane()
+        msg.width_topleft =TESTNODES['WTL'] 
+        msg.height_topleft = TESTNODES['HTL'] 
+        msg.width_topright= TESTNODES['WTR'] 
+        msg.height_topright=TESTNODES['HTR'] 
+        msg.width_bottomright=TESTNODES['WBL'] 
+        msg.height_bottomleft=TESTNODES['HBL'] 
+        msg.width_bottomright=TESTNODES['WBR'] 
+        msg.height_bottomright=TESTNODES['HBR']
+        self.lane_info_publisher.publish(msg)
+
+    def send_BEV(self, img):
+        """Birdeye view callback
+        Send only one message type Image (please visit ROs documentation for more information about custom message type)
+        
+        Note: at this time just use pseudo messages defined in TESTNODES to test the publish() command
+        """
+        
+        #print("Image to be send: {}".format(type(image)))
+        send_image = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
+        self.bev_publisher.publish(send_image)
+
     # ===================================== READ ==========================================
     def _read(self):
         """ It's represent the reading activity on the the serial.
         """
         while not rospy.is_shutdown():
             try:
-                #print("hello from perception")
+                print("hello from perception")
                 time.sleep(2)
                  
             except UnicodeDecodeError:
@@ -151,7 +254,8 @@ class perceptionNODE():
         command = json.loads(msg.data)
         #command = msg.data
         print(command)
-            
+
+    
 if __name__ == "__main__":
     perNod = perceptionNODE()
     perNod.run()

@@ -1,249 +1,327 @@
-
+#!/usr/bin/env python3
 import socket
 import struct
 import time
 import cv2
+
+import sys
+sys.path.append('../') 
         
 import rospy
 
 from cv_bridge       import CvBridge
-from sensor_msgs.msg import Image, String
-from utils.msg import vehicles
+from sensor_msgs.msg import Image
+from std_msgs.msg    import String
+from utils.msg       import vehicles, traffic_sign, perception
 from enum import Enum
 
-from control import controlNODE
+from control.controlNODE import controlNODE
 
-# =============================== CONFIG =================================================
-testRUNING          =  True
-testWAITING         =  True 
 
-class State(Enum):
-    NOT_RUNNING = 0
-    RUNNING = 1
+class SystemStates(Enum):
+    OFFLINE = 0
+    ONLINE = 1
 
 class RunStates(Enum):
-    WAIT = 0
-    # GO_STRAIGHT = 0
-    # SWITCH_LANE = 1
-    # HARD_TURN = 2
-    # WAIT_FOR_PEDESTRIANS = 3
-    # OVERTAKE = 4
-    # PARKING = 5
-    # OUT_OF_PARKING = 6 
-    # FOLLOWING_TRAFFIC = 7 
-    # ROUNDABOUND = 8
-    # #
-    # #
-    # STOP_SIGN = 5
-    # PARKING = 6
-    # CROSSWALK = 7
-    # #
-    # RAMP = 8  
-    # unknown state
-class TrafficSign:
+    RUNNING = 0
+    WAIT = 1
+    HARD_TURN = 2
+    SWITCH_LANE = 3
+    ROUNDABOUT = 4
+    HIGHWAY = 5
+    CROSSWALK = 6
+    RAMP = 7
+    TAILING = 8
+    PARKING = 9
+    TRAFFIC_LIGHT = 10 
+    PRIORITY = 11
+    STOP = 12
+    
+class TrafficSign(Enum):
     #STOP, parking place, crosswalk, priority road, highway entrance, highway exit, roundabout, one-way road, and no-entry road. 
     STOP_SIGN = 0
     PARKING_SIGN = 1
-    CROSS_WALK = 2
+    CROSS_WALK_SIGN = 2
     PRIORITY_SIGN = 3
     HIGHWAY_ENTRANCE_SIGN = 4
     HIGHWAY_EXIT_SIGN = 5
-    ROUNDABOUND_SIGN = 6
+    ROUNDABOUT_SIGN = 6
     ONE_WAY_SIGN = 7
     NO_ENTRY_SIGN = 8
     NO_SIGN = 9
+    
 class TrafficLightRule(Enum):
-    GREEN_LIGHT = 0
-    RED_LIGHT = 1
-    YELLO_LIGHT = 2
+    RED_LIGHT = 0
+    YELLOW_LIGHT = 1
+    GREEN_LIGHT = 2
+    
+class LanePosition(Enum):
+    LEFT_LANE = 0
+    RIGHT_LANE = 1
+    
+class SpeedMod(Enum):
+    NORMAL = 0
+    HIGH = 1
+    LOW = 2
+
+# =============================== CONFIG =================================================
+testRUNNING         =  True
+testWAITING         =  True
+testPARKING         =  True
+testSPEED           =  True
+testTRAFFICLIGHT    =  False
+testTRAFFICSIGN     =  False
+testCROSSWALK       =  True
+DEBUG               =  True
+DEBUG_ANGLE         =  False
+DEBUG_MOD_SPEED     =  True
+
+# =============================== BUFFER =================================================
+#imu buffer
+imu_buffer0 = 0
+imu_buffer1 = 0
+imu_buffer2 = 0
+
+# =============================== GLOBAL VARIABLES =======================================
+#traffic_sign
+traffic_sign_type = TrafficSign.NO_SIGN
+
+#traffic_light
+traffic_light = False
+light_color = TrafficLightRule.GREEN_LIGHT
+
+#pedestrian
+wait_for_pedestrian = False
+pedestrian = False
+    
 class actionNODE:
     def __init__(self) -> None:
         rospy.init_node('actionNODE', anonymous=False)
-        self.lane_subscriber = rospy.Subscriber("/automobile/lane", String, self.lane_check)
-        self.object_subscriber = rospy.Subscriber("/automobile/object", String, self.check_state2)
-        self.traffic_sign_subscriber = rospy.Subscriber("/automobile/traffic_sign", String, self.traffic_sign_check)
-        self.v2v_subscriber = rospy.Subscriber("/automobile/vehicles", vehicles, self.check_state3)
-        self.traffic_light = rospy.Subscriber("/automobile/traffic_light", vehicles, self.traffic_light_check)
-        self.imu = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
-        self.server = rospy.Subscriber("/automobile/server",Server,self.check_server)
+        self.lane_subscriber = rospy.Subscriber("/automobile/lane", perception, self.lane_check)
+        self.pedestrian_subscriber = rospy.Subscriber("/automobile/pedestrian", String, self.pedestrian_check)
+        self.traffic_sign_subscriber = rospy.Subscriber("/automobile/traffic_sign", traffic_sign, self.traffic_sign_check)
+        # self.v2v_subscriber = rospy.Subscriber("/automobile/vehicles", vehicles, self.check_state3)
+        self.traffic_light_subscriber = rospy.Subscriber("/automobile/traffic_light", vehicles, self.traffic_light_check)
+        # self.imu_subscriber = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
+        # self.server_subscriber = rospy.Subscriber("/automobile/server",Server,self.check_server)
         #MORE SUBSCRIBING IF AVAILABLE
         
         #INIT STATE
-        # self.init = 1
-        # self.start_signal = 0
-        # self.state = State.NOT_RUNNING
-        # self.run_state = RunStates.GO_STRAIGHT
-        # self.traffic_light = Traffic_Light_Rule.GREEN_LIGHT
-        # self.flags = None
-        # self.control = controlNODE()
+        self.run_state = RunStates.RUNNING
         self.init = 1
         self.start_signal = 0
-        self.traffic_sign = NO_SIGN
+        self.lane = LanePosition.RIGHT_LANE
+        self.speed_mod = SpeedMod.NORMAL
+        self.lane_switchable = False
+        self.sign_start_time = 0
+        self.base_speed = 0.15
+        self.steer_angle = 0
+        self.lock = 0
         self.unlock = 1
-        self.main_process()
+        self.control = controlNODE()
         
-    def lock_state():
+    def lock_state(self, state):
+        if not isinstance(state, RunStates):
+            raise TypeError('state must be an instance of RunStates Enum')
+
         if self.unlock:
             self.lock = 1
             self.unlock = 0
-            self.time_lock_start = rospy.get_time()
+            self.lock_start_time = time.time()
+            self.run_state = state
         
-    def unlock_state(self, state, time):
+    def unlock_state(self, duration):
         if self.lock:
-            if (rospy.get_time() - self.time_lock_start) < time:
-                self.run_state = state
-            else:
+            if (time.time() - self.lock_start_time) >= duration:
                 self.unlock = 1
                 self.lock = 0
+                
+    def lane_check(self, msg):
+        if self.lane == LanePosition.RIGHT_LANE: #on the right side of the road, check left lane type for lane switching
+            if msg.left_lane_type == 1: #dotted lane
+                self.lane_switchable = True
+            else:
+                self.lane_switchable = False
+                
+        else: #on the left side of the road, check right lane type for lane switching
+            if msg.right_lane_type == 1: #dotted lane
+                self.lane_switchable = True
+            else:
+                self.lane_switchable = False
+        if DEBUG_ANGLE:
+            print("streer angle: ",msg.steer_angle)
+        self.steer_angle = msg.steer_angle
+        
+    def pedestrian_check(self, msg):
+        pedestrian = msg.pedestrian
     
     def traffic_sign_check(self, msg):
-        if msg.data == "STOP_SIGN":
-            self.traffic_sign = TrafficSign.STOP_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "PARKING_SIGN":
-            self.traffic_sign = TrafficSign.PARKING_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "CROSS_WALK":
-            self.traffic_sign = TrafficSign.CROSS_WALK
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "PRIORITY_SIGN":
-            self.traffic_sign = TrafficSign.PRIORITY_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "HIGHWAY_ENTRANCE_SIGN"
-            self.traffic_sign = TrafficSign.HIGHWAY_ENTRANCE_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "HIGHWAY_EXIT_SIGN"
-            self.traffic_sign = TrafficSign.HIGHWAY_EXIT_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "ROUNDABOUND_SIGN"
-            self.traffic_sign = TrafficSign.ROUNDABOUND_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "ONE_WAY_SIGN"
-            self.traffic_sign = TrafficSign.ONE_WAY_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
-        elif msg.data == "NO_ENTRY_SIGN"
-            self.traffic_sign = TrafficSign.NO_ENTRY_SIGN
-            if run_state==RUNNING:
-                self.run_state = RunStates.WAIT
+        global traffic_sign_type
+        traffic_sign_type = msg.traffic_sign_type
+        self.unlock_state(1)
+        
+        if DEBUG:
+            print("traffic_sign callback, sign: ", traffic_sign_type, ", run_state: ", self.run_state)
+        
+        if self.unlock:
+            if traffic_sign_type == TrafficSign.STOP_SIGN.value:            
+                if self.run_state == RunStates.RUNNING:
+                    self.sign_start_time = time.time()
+                    if DEBUG:
+                        print("STOP SIGN")
+                    self.run_state = RunStates.WAIT
+                    
+            elif traffic_sign_type == TrafficSign.PARKING_SIGN:
+                if self.run_state == RunStates.RUNNING:
+                    self.run_state = RunStates.PARKING
+                    
+            elif traffic_sign_type == TrafficSign.CROSS_WALK_SIGN.value:
+                # traffic_sign_type = TrafficSign.CROSS_WALK
+                if self.run_state == RunStates.RUNNING:
+                    if DEBUG:
+                        print("Running slow towards CROSSWALK")
+                    self.speed_mod = SpeedMod.LOW
+                    self.run_state = RunStates.CROSSWALK
+            
+            elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
+                # traffic_sign_type = TrafficSign.PRIORITY_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    self.run_state = RunStates.WAIT
+                    
+            elif traffic_sign_type == TrafficSign.HIGHWAY_ENTRANCE_SIGN.value:
+                if self.run_state == RunStates.RUNNING:
+                    self.speed_mod = SpeedMod.HIGH
+                    self.run_state = RunStates.HIGHWAY
+                    
+            elif traffic_sign_type == TrafficSign.HIGHWAY_EXIT_SIGN.value:
+                if self.run_state==RunStates.HIGHWAY:
+                    self.speed_mod = SpeedMod.NORMAL
+                    self.run_state = RunStates.RUNNING
+                    
+            elif traffic_sign_type == TrafficSign.ROUNDABOUT_SIGN.value:
+                # traffic_sign_type = TrafficSign.ROUNDABOUT_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    self.run_state = RunStates.ROUNDABOUT
+                    
+            elif traffic_sign_type == TrafficSign.ONE_WAY_SIGN.value:
+                # traffic_sign_type = TrafficSign.ONE_WAY_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    print("One way road")
+                    
+            elif traffic_sign_type == TrafficSign.NO_ENTRY_SIGN.value:
+                # traffic_sign_type = TrafficSign.NO_ENTRY_SIGN
+                if self.run_state == RunStates.RUNNING:
+                    print("Can not go this way")
+            
+            elif traffic_sign_type == TrafficSign.NO_SIGN.value:
+                if self.run_state != RunStates.RUNNING:
+                    self.run_state = RunStates.RUNNING
+                
+    def traffic_light_check(self, msg):
+        print("Hello")
+        
+    def imu_check(self, msg):
+        RAMP_HEIGHT = 15
+        RAMP_WIDTH = 100 # not know the exact value
+        RAMP_ANGLE = math.atan(RAMP_HEIGHT/RAMP_WIDTH)
+        
+        if msg.pitch > 0 and msg.pitch <= RAMP_ANGLE:
+            if self.run_state == RunStates.RUNNING:
+                self.speed_mod = SpeedMod.HIGH
+                self.run_state = RunStates.RAMP
+            
+        elif msg.pitch < 0 and msg.pitch >= -RAMP_ANGLE:
+            if self.run_state == RunStates.RAMP:
+                self.speed_mod = SpeedMod.LOW
+                
+        else:
+            if self.run_state == RunStates.RAMP and self.speed_mod == SpeedMod.LOW:
+                self.run_state = RunStates.RUNNING
+            self.speed_mod = NORMAL
+                
+    def running_action(self):
+        self.control.setSteer(self.steer_angle)
+        OFFSET_ANGLE = 0.05
+        # MOD = 10
+        offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
+        if DEBUG_MOD_SPEED:
+            print("offset speed: ",offset_speed)
+        if (self.base_speed - offset_speed) > 0:
+            self.control.setSpeed(self.base_speed - offset_speed)
+        else:
+            self.speed_action()
         
     def wait_action(self):
-            if  (    
-                (traffic_light and light_color == TrafficLightColor.GREEN_LIGHT) or 
-                (stop_sign     and rospy.get_time() - self.get_sign_time() >= 3) or
-                (pedestrian    and pedestrian_detection == PedestrianPosition.LEFT)
-            ):
-            self.lock_state()
-            self.unlock_state(RunStates.RUNNING,1)
+        global traffic_sing_type
+        global traffic_light
+        global wait_for_pedestrian
+        if DEBUG:   
+            print(traffic_sign_type)
+        if  (    
+            (traffic_light == True                       and light_color == TrafficLightColor.GREEN_LIGHT) or 
+            (traffic_sign_type == TrafficSign.STOP_SIGN.value and (time.time() - self.sign_start_time) >= 3) or
+            (wait_for_pedestrian == True           and pedestrian == False)
+        ):
+            wait_for_pedestrian = False
+            self.speed_mod = SpeedMod.NORMAL
+            self.lock_state(RunStates.RUNNING)
+        else:
+            if DEBUG:
+                print(time.time() - self.sign_start_time)
+            self.control.brake(0)
+            
+    def speed_action(self): # called in state == RAMP and HIGHWAY
+        if self.speed_mod == SpeedMod.NORMAL:
+            speed_mod = 1
+        elif self.speed_mod == SpeedMod.HIGH:
+            speed_mod = 1.4
+        elif self.speed_mod == SpeedMod.LOW:
+            speed_mod = 0.6
+            
+        self.control.setSpeed(self.base_speed * speed_mod)
+        
+    def cross_walk_action(self):
+        if pedestrian == False:
+            self.speed_action()
+        else:
+            wait_for_pedestrian = True
+            self.run_state = RunStates.WAIT
+            
     def auto_control(self):
-        if testRUNING:
+        if testRUNNING:
             if self.run_state == RunStates.RUNNING:
+                if DEBUG: 
+                    print("RUNNING")                
+                self.running_action()
         if testWAITING:
             if self.run_state == RunStates.WAIT:
+                if DEBUG: 
+                    print("WAIT")
                 self.wait_action()
-            
+        if testSPEED:
+            if (    self.run_state == RunStates.RAMP    or
+                    self.run_state == RunStates.HIGHWAY
+                ):
+                if DEBUG: 
+                    print("SPEED")
+                self.speed_action()
+        if testCROSSWALK:
+            if self.run_state == RunStates.CROSSWALK:
+                if DEBUG:
+                    print("CROSS_WALK")
+                self.cross_walk_action()
         
     def run(self):
-        while not rospy.is_shutdown() and start: 
-            while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
-                print("Waiting for start signal")
-            if(self.state == State.NOT_RUNNING):
-                print("DOING NOTHING")
-            elif(self.state == State.RUNNING):
-                auto_control()
+        while not rospy.is_shutdown(): 
+            # while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
+            #     print("Waiting for start signal")
+            # if(self.state == State.OFFLINE):
+            #     print("DOING NOTHING")
+            # elif(self.state == State.ONLINE):
+            self.auto_control()
+            rospy.sleep(0.1)
+                
 if __name__ == "__main__":
     action_node = actionNODE()
     action_node.run()
-    #         while not rospy.is_shutdown() and start: 
-    #             while not start: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
-    #                 print("Waiting for green")        
-    #             if(self.state == State.NOT_RUNNING):
-    #                 print("DOING NOTHING")
-    #             elif(self.state == State.RUNNING):
-    #                 auto_control()       
-    
-    # def check_trafficlight(self, msg):
-    #     if GREEN_LIGHT:
-    #         if self.init == 1:
-    #             self.start = 1 #bien start chi duoc dung mot lan
-    #             self.init = 0
-    #             self.state = State.RUNNING
-    # def check_state2(self, msg):
-    #     pass
-    
-    # def imu_check(self,msg):
-    #     # neu gap doc thi doi state thanh len doc
-    #     # neu xuong doc thi doi state thanh xuong doc
-        
-    # def object_check(self,msg):
-        
-    # def traffic_check(self,msg):
-    
-    # def lane_check(self, msg): # neu xe qua lech do voi duong dang di => return goc steer
-    #     # xu ly xe di trong nay
-    #     # gui toc do + goc lai
-    #     # tinh toan gi do de self.angle and self.speed
-    #     # state machine se duoc xu ly o day
-    #     # if state == len doc hoac xuong doc: xu ly toc do
-
-    # def check_server(self, msg):
-    #     # xu ly tin hieu overtake static car
-    #     # xu ly tin hieu dung xe
-    #     # xu ly tin hieu den xanh den do
-        
-    # def auto_control(self): # chi de check state machine
-    #     if self.run_state == RunStates.GO_STRAIGHT:
-    #         if gap nguoi di bo:
-    #             chuyen trang thai => cho nguoi di bo
-    #         if gap static car:
-    #             chuyen sang trang thai overtake
-    #         self.control.setsomething
-    #     if self.run_state == RunStates.SWITCH_LANE:
-    #         pass
-
-    #     if self.run_state == RunStates.WAIT_FOR_PEDESTRIANS: #cho thay doi trang thai tu object_detection
-    #         if(nguoi di bo di qua roi):
-    #             self.run_state == RunStates.GO_STRAIGHT
-
-    #     if self.run_state == RunStates.OVERTAKE: #cho thay doi trang thai tu server
-    #         if(overtake xong roi()): # HARD => PLEASE INVESTIGATE MORE
-    #             self.run_state == RunStates.GO_STRAIGHT
-
-    #     if self.run_state == RunStates.PARKING: #cho thay doi trang thai tu server
-    #         if(cho` parking xong roi):
-    #             self.run_state == RunStates.OUT_OF_PARKING
-
-    #     if self.run_state == RunStates.OUT_OF_PARKING:
-    #         if(ra khoi parking):
-    #             self.run_state == RunStates.GO_STRAIGHT
-
-    #     if self.run_state == RunStates.FOLLOWING_TRAFFIC: #doi tin hieu tu traffic light
-            
-    #         if(self.traffic_light == Traffic_Light_Rule.GREEN_LIGHT):
-    #             pass
-
-    #         if(self.traffic_light == Traffic_Light_Rule.RED_LIGHT):
-    #             pass
-
-    #         if(self.traffic_light == Traffic_Light_Rule.YELLOW_LIGHT):
-
-    #     if self.run_state == RunStates.ROUNDABOUND:
-    #         dosomething until out of ROUNDABOUND
-    #         self.run_state == RunStates.GO_STRAIGHT
-
-    # def main_process(self):
-    #         while not rospy.is_shutdown() and start: 
-    #             while not start: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
-    #                 print("Waiting for green")        
-    #             if(self.state == State.NOT_RUNNING):
-    #                 print("DOING NOTHING")
-    #             elif(self.state == State.RUNNING):
-    #                 auto_control()
             

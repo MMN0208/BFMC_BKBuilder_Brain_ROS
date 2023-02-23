@@ -96,7 +96,7 @@ class cameraNODE():
         self.camera.contrast        =   0
         self.camera.iso             =   0 # auto
 
-        self.imgSize                =   (640, 480)    # the actual image size
+        self.imgSize                =   (640, 368)    # the actual image size
             
             
     # ===================================== GET STAMP ====================================
@@ -121,7 +121,7 @@ class cameraNODE():
 
             # read and reshape from bytes to np.array
             data  = np.frombuffer(data, dtype=np.uint8)
-            data  = np.reshape(data, (480, 640, 3))
+            data  = np.reshape(data, (368, 640, 3))
             stamp = time.time()
 
             # output image and time stamp

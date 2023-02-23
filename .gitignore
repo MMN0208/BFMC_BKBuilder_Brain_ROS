@@ -52,5 +52,7 @@ qtcreator-*
 CATKIN_IGNORE
 
 #  Others 
+*.avi
 *.mp4
 *.mdj
+*.png

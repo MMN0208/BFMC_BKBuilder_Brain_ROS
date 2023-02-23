@@ -1,8 +1,8 @@
 import cv2 as cv
 import numpy as np
-import matplotlib.pyplot as plt
-from const import *
-
+#import matplotlib.pyplot as plt
+from .const import *
+from .utils import Trackbars
 class Preprocessor:
 
     """ This class is used to preprocessing the scene which is input steamed from camera.
@@ -65,7 +65,7 @@ class Preprocessor:
         self.sobel_kernel_size = params_processing['sobel_kernel_size'] 
         self.lower_white = params_processing['lower_white']
         self.upper_white = params_processing['upper_white']
-        
+        #self.tracker = Trackbars()
         print("Init processing images")
         
 
@@ -78,7 +78,7 @@ class Preprocessor:
         return cv.GaussianBlur(img, (3,3), 0)
 
     def threshold(self, img):
-        ret, img = cv.threshold(img, 220, 225, cv.THRESH_BINARY) 
+        _, img = cv.threshold(img, 200, 250, cv.THRESH_BINARY) 
         return img
 
     def hls_threshold(self, img, lower = 200, upper = 255):
@@ -95,20 +95,17 @@ class Preprocessor:
 
     def warpImg(self, img):
 
-        H = img.shape[0]
-        W = img.shape[1]
-#        wTop = 82 
-#        hTop = 170 
-#        wBot = 20 
-#        hBot = 312 
+        
         birdeyeView = dict()
+        H, W, C = img.shape
 
         src = params_processing['src_points']
+        # src = self.tracker.getValPoints()
         dst = params_processing['dst_points']
         transform_view = cv.getPerspectiveTransform(src, dst)
         inverse_transform_view = cv.getPerspectiveTransform(dst, src)
         
-        birdeye = cv.warpPerspective(img, transform_view, (W, H), flags=cv.INTER_LINEAR)           # Eye-bird view
+        birdeye = cv.warpPerspective(img, transform_view, (W, H))           # Eye-bird view
         birdeyeLeft = birdeye[:, :W//2]
         birdeyeRight = birdeye[:, W//2: ]
 
@@ -122,26 +119,36 @@ class Preprocessor:
         return birdeyeView, transform_view, inverse_transform_view
 
     def process(self, img):
-        print(img.shape)        
+        """Preproces pipeline
+
+        args: raw image of scene
+        pipeline: warpImage -> gray -> thresh -> blur -> canny
+        return: dictionary : {
+            key: value
+            "birdeye_img" :         binary threshold bird eye view
+            "transform_view":       transform matrix to new perspective
+            "inverse_transform":    inverse to original perspective
+            "thresh":               binary threshold of original perspective
+            "canny":                
+        }
+        """        
         results = dict()
         H, W, C = img.shape
         assert (H == IMG_SIZE[1]), "Size of scene is not compatible. Expected {} but got {}".format(IMG_SIZE[1], H)
-        birdeyeView, transformed_view, invMatrixTransform = self.warpImg(img)
 
-        hsl_bin = self.hls_threshold(birdeyeView['birdeye'])
+        birdeyeView, transformed_view, invMatrixTransform = self.warpImg(img)
         mask = cv.inRange(birdeyeView['birdeye'], self.lower_white, self.upper_white)
         hls_bin = cv.bitwise_and(birdeyeView['birdeye'], birdeyeView['birdeye'], mask=mask)
-
         gray = self.grey_scale(hls_bin)
-        _, thresh = cv.threshold(gray, 150, 255, cv.THRESH_BINARY)
+        thresh = self.threshold(gray) 
         blur = cv.GaussianBlur(thresh, (3, 3), 0)
         canny = cv.Canny(blur, 40, 60)
+
 
         results['birdeye_img'] = birdeyeView['birdeye']
         results["birdeye"] = birdeyeView 
         results['inverse_transform'] = invMatrixTransform
         results['transformed_view'] = transformed_view
-        results['hsl_bin'] = hsl_bin
         results['gray'] = gray
         results['thresh'] = thresh
         results['blur'] = blur

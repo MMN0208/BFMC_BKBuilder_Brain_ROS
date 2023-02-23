@@ -53,8 +53,11 @@ add_message_files(
   pedestrian_output.msg
   IMU.msg
   localisation.msg
+  traffic_sign.msg
   vehicles.msg
   environmental.msg
+  lane.msg
+  perception.msg
 )
 
 ## Generate services in the 'srv' folder
