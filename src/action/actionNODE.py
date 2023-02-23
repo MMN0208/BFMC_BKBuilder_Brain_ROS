@@ -69,7 +69,7 @@ testRUNNING         =  True
 testWAITING         =  True
 testPARKING         =  True
 testSPEED           =  True
-testTRAFFICLIGHT    =  False
+testTRAFFICLIGHT    =  True
 testTRAFFICSIGN     =  False
 testCROSSWALK       =  True
 DEBUG               =  True
@@ -252,15 +252,15 @@ class actionNODE:
             self.speed_action()
         
     def wait_action(self):
-        global traffic_sing_type
+        global traffic_sign_type
         global traffic_light
         global wait_for_pedestrian
         if DEBUG:   
             print(traffic_sign_type)
         if  (    
-            (traffic_light == True                       and light_color == TrafficLightColor.GREEN_LIGHT) or 
+            (traffic_light == True                            and light_color == TrafficLightColor.GREEN_LIGHT) or 
             (traffic_sign_type == TrafficSign.STOP_SIGN.value and (time.time() - self.sign_start_time) >= 3) or
-            (wait_for_pedestrian == True           and pedestrian == False)
+            (wait_for_pedestrian == True                      and pedestrian == False)
         ):
             wait_for_pedestrian = False
             self.speed_mod = SpeedMod.NORMAL
