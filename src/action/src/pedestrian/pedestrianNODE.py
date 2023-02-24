@@ -30,6 +30,7 @@ Logs: 12/2/23 (hai): Added code for pedestrian detection
 
 class pedestrianNODE():
     def __init__(self) -> None:
+        rospy.init_node('pedestrianNODE', anonymous=False)
         self.pedestrian_subscriber = rospy.Subscriber("/automobile/pedestrian", pedestrian, self.check_pedestrian)
         self.lane_subscriber = rospy.Subscriber("/automobile/lane_info", String, self.check_lane)
         self.pedestrian_publisher = rospy.Publisher("/automobile/pedestrian_test", pedestrian_output, queue_size=1)
@@ -57,7 +58,7 @@ class pedestrianNODE():
      
     def draw_prediction(self, img, x, y, x_plus_w, y_plus_h, points):
         color = (0, 255, 0)
-        print(f"TYPE:{type(x), type(y)}")
+        #print(f"TYPE:{type(x), type(y)}")
         #cv2.rectangle(img, (int(x), int(y)), (int(x_plus_w), int(y_plus_h)), color, 2)
         #cv2.putText(img, "", (int(x - 10), int(y - 10)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
@@ -71,7 +72,7 @@ class pedestrianNODE():
         """Determined if a pedestrian is currently walking or not
         """
         image = self.bridge.imgmsg_to_cv2(msg.image, "bgr8")
-        print(f"IMAGE FROM PEDESTRIAN:{image}")
+        #print(f"IMAGE FROM PEDESTRIAN:{image}")
         output = pedestrian_output()
         output.pedestrian = 0
         if(self.draw_prediction(image, msg.x, msg.y, msg.h, msg.w, self.points)):
