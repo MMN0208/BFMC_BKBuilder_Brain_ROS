@@ -39,15 +39,21 @@ class RunStates(Enum):
     
 class TrafficSign(Enum):
     #STOP, parking place, crosswalk, priority road, highway entrance, highway exit, roundabout, one-way road, and no-entry road. 
-    STOP_SIGN = 0
-    PARKING_SIGN = 1
-    CROSS_WALK_SIGN = 2
-    PRIORITY_SIGN = 3
-    HIGHWAY_ENTRANCE_SIGN = 4
-    HIGHWAY_EXIT_SIGN = 5
-    ROUNDABOUT_SIGN = 6
-    ONE_WAY_SIGN = 7
-    NO_ENTRY_SIGN = 8
+    CROSS_WALK_SIGN = 0
+    NO_ENTRY_SIGN = 1
+    ONE_WAY_SIGN = 2
+    PARKING_SIGN = 3
+    PRIORITY_SIGN = 4
+    ROUNDABOUT_SIGN = 5
+    STOP_SIGN = 6
+    
+    
+    
+    HIGHWAY_ENTRANCE_SIGN = 8
+    HIGHWAY_EXIT_SIGN = 7
+    
+    
+    
     NO_SIGN = 9
     
 class TrafficLightRule(Enum):

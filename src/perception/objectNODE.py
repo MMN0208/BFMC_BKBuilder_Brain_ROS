@@ -35,6 +35,7 @@ import rospy
 
 from std_msgs.msg      import String
 from sensor_msgs.msg import Image
+from utils.msg import traffic_sign
 from utils.srv        import subscribing, subscribingResponse
 from cv_bridge       import CvBridge
 
@@ -56,13 +57,17 @@ class objectNODE():
         
         #======CAMERA======
         self.bridge = CvBridge()
-        self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
+        # self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
+
+        self.object_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self._object)
         #======PUBLISHER======
+        self.debug_publisher = rospy.Publisher("/automobile/object_debug", Image, queue_size=1)
         self.pedestrian_publisher = rospy.Publisher("/automobile/pedestrian", pedestrian, queue_size=1)
+        self.traffic_light_publisher = rospy.Publisher("/automobile/traffic_sign", traffic_sign, queue_size=1)
         #self.car_pubisher
         #self.traffic_light_publisher
         #======OBJECT DETECTION======
-        self.model_path = "object_detection/weights/traffic_1.tflite"
+        self.model_path = "object_detection/weights/traffic_3.tflite"
         self.names = "object_detection/data.yaml"
         self.conf_thresh = 0.5
         self.iou_thresh = 0.65
@@ -85,35 +90,59 @@ class objectNODE():
     def _object(self, msg):
         """Object detection callback
         """
-        image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+        #print("down here")
+        image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
         output_image = image
         full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
         pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
         #print(f"DetectionProcess{net_image.shape}")
-        det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
-                
-                
-        for *xyxy, conf, cls in reversed(det): #Process prediction loop
-            '''
-            xyxy (List): bounding box
-            conf (int): prediction percentage
-            cls (int): class index of prediction
-            '''
-            c = int(cls)  # integer class
-            label = f'{self.model.names[c]} {conf:.2f}' #Set label to the class detected
-            command = f'DETECT:{label}:{xyxy}'
-            print(command)
-            output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
-        
-        #cv2.imshow("test", output_image)       
-        #cv2.waitKey(1)    
-        imageObject = self.bridge.cv2_to_imgmsg(output_image, "bgr8")
+        #det = self.model.process_predictions(pred[0], output_image, pad) #Post process prediction
+        det = pred[0]
+        traffic = traffic_sign()
+        traffic.traffic_sign_type = 9
+        #Process predictions
+        if len(det):
+            # Rescale boxes from img_size to im0 size
+            # x1, y1, x2, y2=
+            det[:, :4] = self.model.get_scaled_coords(det[:,:4], output_image, pad)
+            output = {}
+            
+            s = ""
+            
+            # Print results
+            for c in np.unique(det[:, -1]):
+                n = (det[:, -1] == c).sum()  # detections per class
+                s += f"{n} {self.names[int(c)]}{'s' * (n > 1)}, "  # add to string
+            
+            if s != "":
+                s = s.strip()
+                s = s[:-1]
+            
+            #logger.info("Detected: {}".format(s))
+            
+            # Write results
+            for *xyxy, conf, cls in reversed(det):
+                #c = int(cls)
+                #print(f'{self.names[c]} {conf:.2f} {xyxy}')
+                # Add bbox to image
+                c = int(cls)  # integer class
+                traffic.traffic_sign_type = c
+                label =  f"Class:{self.model.names[c]}"
+                print(label)
+                self.traffic_light_publisher.publish(traffic)
+                output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True))
+        else:        
+            self.traffic_light_publisher.publish(traffic)
+        #PROCESS
+        imageObject = self.bridge.cv2_to_imgmsg(output_image, "rgb8")
         out = pedestrian()
         out.image = imageObject
         out.valid, out.is_pedestrian_infront, out.x, out.y, out.h, out.w = 0,0,0,0,0,0
+        
+        self.debug_publisher.publish(out.image)
         self.pedestrian_publisher.publish(out)  
         tinference, tnms = self.model.get_last_inference_time()
-        print("Frame done in {}".format(tinference+tnms))
+        #print("Frame done in {}".format(tinference+tnms))
      
             
 if __name__ == "__main__":
