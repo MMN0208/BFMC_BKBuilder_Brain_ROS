@@ -12,7 +12,7 @@ import rospy
 from cv_bridge       import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg    import String, Byte
-from utils.msg       import vehicles, traffic_light, traffic_sign, perception
+from utils.msg       import *
 from enum            import Enum
 
 from control.controlNODE import controlNODE
@@ -105,7 +105,7 @@ class actionNODE:
     def __init__(self) -> None:
         rospy.init_node('actionNODE', anonymous=False)
         self.lane_subscriber = rospy.Subscriber("/automobile/lane", perception, self.lane_check)
-        self.pedestrian_subscriber = rospy.Subscriber("/automobile/pedestrian", String, self.pedestrian_check)
+        self.pedestrian_subscriber = rospy.Subscriber("/automobile/pedestrian_test", pedestrian_output, self.pedestrian_check)
         self.traffic_sign_subscriber = rospy.Subscriber("/automobile/traffic_sign", traffic_sign, self.traffic_sign_check)
         # self.v2v_subscriber = rospy.Subscriber("/automobile/vehicles", vehicles, self.check_state3)
         # self.imu_subscriber = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
@@ -128,7 +128,7 @@ class actionNODE:
         self.speed_mod = SpeedMod.NORMAL
         self.lane_switchable = False
         self.sign_start_time = 0
-        self.base_speed = 0.15
+        self.base_speed = 0.2
         self.steer_angle = 0
         self.lock = 0
         self.unlock = 1
@@ -176,7 +176,7 @@ class actionNODE:
         if self.sys_state == SystemStates.ONLINE:
             global traffic_sign_type
             traffic_sign_type = msg.traffic_sign_type
-            self.unlock_state(1)
+            self.unlock_state(3)
             
             if DEBUG:
                 print("traffic_sign callback, sign: ", traffic_sign_type, ", run_state: ", self.run_state)
@@ -187,7 +187,7 @@ class actionNODE:
                         self.sign_start_time = time.time()
                         if DEBUG:
                             print("STOP SIGN")
-                        self.run_state = RunStates.WAIT
+                        self.lock_state(RunStates.WAIT)
                         
                 elif traffic_sign_type == TrafficSign.PARKING_SIGN.value:
                     if self.run_state == RunStates.RUNNING:
@@ -199,7 +199,7 @@ class actionNODE:
                         if DEBUG:
                             print("Running slow towards CROSSWALK")
                         self.speed_mod = SpeedMod.LOW
-                        self.run_state = RunStates.CROSSWALK
+                        self.lock_state(RunStates.CROSSWALK)
                 
                 elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
                     # traffic_sign_type = TrafficSign.PRIORITY_SIGN
@@ -232,7 +232,7 @@ class actionNODE:
                         print("Can not go this way")
                 
                 elif traffic_sign_type == TrafficSign.NO_SIGN.value:
-                    if self.run_state != RunStates.RUNNING:
+                    if self.unlock and self.run_state != RunStates.RUNNING:
                         self.run_state = RunStates.RUNNING
                 
     def traffic_light_check(self, msg):
@@ -241,7 +241,7 @@ class actionNODE:
         traffic_light_id = msg.traffic_light_id
         
         if self.sys_state == SystemStates.ONLINE:
-            self.unlock_state(1)
+            self.unlock_state(3)
             
             if DEBUG:
                 print("traffic_light callback, id: ", traffic_light_id)
@@ -257,6 +257,8 @@ class actionNODE:
             if traffic_light_id:
                 if light_color[traffic_light_id - 1] == TrafficLightRule.GREEN_LIGHT.value:
                     self.sys_state = SystemStates.ONLINE
+                    self.lock_state(RunStates.RUNNING)
+                    traffic_light_id = 0
                 
     def semaphore_master_update(self, msg):
         global light_color
@@ -328,7 +330,7 @@ class actionNODE:
         elif self.speed_mod == SpeedMod.HIGH:
             speed_mod = 1.4
         elif self.speed_mod == SpeedMod.LOW:
-            speed_mod = 0.6
+            speed_mod = 0.4
             
         self.control.setSpeed(self.base_speed * speed_mod)
         
