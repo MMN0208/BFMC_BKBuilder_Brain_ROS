@@ -232,7 +232,7 @@ class actionNODE:
                         print("Can not go this way")
                 
                 elif traffic_sign_type == TrafficSign.NO_SIGN.value:
-                    if self.unlock and self.run_state != RunStates.RUNNING:
+                    if self.run_state != RunStates.CROSSWALK:
                         self.run_state = RunStates.RUNNING
                 
     def traffic_light_check(self, msg):
@@ -250,15 +250,6 @@ class actionNODE:
                 if traffic_light_id:
                     if self.run_state == RunStates.RUNNING:
                         self.run_state = RunStates.TRAFFIC_LIGHT
-        else:
-            if DEBUG:
-                print("WAITING FOR GREEN LIGHT")
-                
-            if traffic_light_id:
-                if light_color[traffic_light_id - 1] == TrafficLightRule.GREEN_LIGHT.value:
-                    self.sys_state = SystemStates.ONLINE
-                    self.lock_state(RunStates.RUNNING)
-                    traffic_light_id = 0
                 
     def semaphore_master_update(self, msg):
         global light_color
@@ -388,12 +379,19 @@ class actionNODE:
                     self.traffic_light_action()
         
     def run(self):
+        global traffic_light_id
+        global light_color
         while not rospy.is_shutdown(): 
             # while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
             #     print("Waiting for start signal")
             if self.sys_state == SystemStates.OFFLINE:
                 if DEBUG: 
                     print("WAITING FOR START SIGNAL")
+                    
+                if traffic_light_id:
+                    if light_color[traffic_light_id - 1] == TrafficLightRule.GREEN_LIGHT.value:
+                        self.sys_state = SystemStates.ONLINE
+                        
             elif self.sys_state == SystemStates.ONLINE:
                 self.auto_control()
             
