@@ -42,7 +42,7 @@ from cv_bridge       import CvBridge
 import numpy as np
 import cv2
 from object_detection.network.edgetpumodel import EdgeTPUModel
-from object_detection.network.utils import plot_one_box, Colors, get_image_tensor
+from object_detection.network.utils import plot_one_box, Colors, get_image_tensor, xyxy2xywh
 
 from utils.msg import pedestrian
 
@@ -60,8 +60,11 @@ class objectNODE():
         # self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
 
         self.object_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self._object)
+        self.depth_subscriber = rospy.Subscriber("/camera/depth/image_rect_raw", Image, self._depth)
         #======PUBLISHER======
         self.debug_publisher = rospy.Publisher("/automobile/object_debug", Image, queue_size=1)
+        self.depth_debug_publisher = rospy.Publisher("/automobile/depth_debug", Image, queue_size=1)
+
         self.pedestrian_publisher = rospy.Publisher("/automobile/pedestrian", pedestrian, queue_size=1)
         self.traffic_light_publisher = rospy.Publisher("/automobile/traffic_sign", traffic_sign, queue_size=1)
         #self.car_pubisher
@@ -78,7 +81,14 @@ class objectNODE():
         
         self.colors = Colors()
         #.
+        self.depth = np.random.rand(480, 848)
+    # ===================================== DEPTH ==========================================
+    def _depth(self, msg):
+        depth = self.bridge.imgmsg_to_cv2(msg)
         
+        #print(f"DEPTH TYPE:{type(self.depth)}")
+        self.depth = cv2.resize(depth, (1280, 720))
+        #print(f"DEPTH:{self.depth.shape}")
     # ===================================== RUN ==========================================
     def run(self):
         """Apply the initializing methods and start the threads
@@ -93,6 +103,7 @@ class objectNODE():
         #print("down here")
         image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
         output_image = image
+        #print(f"IMAGE:{image.shape}")
         full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
         pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
         #print(f"DetectionProcess{net_image.shape}")
@@ -127,8 +138,13 @@ class objectNODE():
                 # Add bbox to image
                 c = int(cls)  # integer class
                 traffic.traffic_sign_type = c
-                label =  f"Class:{self.model.names[c]}"
-                print(label)
+                
+                d = self.depth[int(xyxy[0]):int(xyxy[2]), int(xyxy[1]):int(xyxy[3])]
+                print(f"Depth:{d}")
+                
+                label = f"Class:{self.model.names[c]}:{xyxy}"
+                
+                                
                 self.traffic_light_publisher.publish(traffic)
                 output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True))
         else:        
@@ -143,8 +159,22 @@ class objectNODE():
         self.pedestrian_publisher.publish(out)  
         tinference, tnms = self.model.get_last_inference_time()
         #print("Frame done in {}".format(tinference+tnms))
-     
-            
+
+class depthNODE():
+    def __init__(self):
+        rospy.init_node('depthNODE', anonymous=False)
+        self.bridge = CvBridge()
+        self.depth_subscriber = ropsy.Subscriber("/camera/depth/image_rect_raw", Image, self._depth)
+
+    def run(self):
+        """Apply the initializing methods and start the threads
+        """
+        rospy.loginfo("starting depthNODE")
+        rospy.spin()  
+    
+    def _depth(self, msg):
+        pass
+
 if __name__ == "__main__":
     perNod = objectNODE()
     perNod.run()
