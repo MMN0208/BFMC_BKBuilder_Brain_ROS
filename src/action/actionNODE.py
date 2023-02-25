@@ -3,6 +3,7 @@ import socket
 import struct
 import time
 import cv2
+import math
 
 import sys
 sys.path.append('../') 
@@ -108,7 +109,7 @@ class actionNODE:
         self.pedestrian_subscriber = rospy.Subscriber("/automobile/pedestrian_test", pedestrian_output, self.pedestrian_check)
         self.traffic_sign_subscriber = rospy.Subscriber("/automobile/traffic_sign", traffic_sign, self.traffic_sign_check)
         # self.v2v_subscriber = rospy.Subscriber("/automobile/vehicles", vehicles, self.check_state3)
-        # self.imu_subscriber = rospy.Subscriber("/automobile/IMU",IMU,self.imu_check)
+        self.imu_subscriber = rospy.Subscriber("/automobile/IMU", IMU, self.imu_check)
         # self.server_subscriber = rospy.Subscriber("/automobile/server",Server,self.check_server)
         
         # TRAFFIC_LIGHT SUBSCRIBERS
@@ -122,6 +123,8 @@ class actionNODE:
         #INIT STATE
         self.sys_state = SystemStates.OFFLINE
         self.run_state = RunStates.RUNNING
+        self.cur_x = 0
+        self.cur_y = 0
         self.init = 1
         self.start_signal = 0
         self.lane = LanePosition.RIGHT_LANE
@@ -187,7 +190,7 @@ class actionNODE:
                         self.sign_start_time = time.time()
                         if DEBUG:
                             print("STOP SIGN")
-                        self.lock_state(RunStates.WAIT)
+                        self.run_state = RunStates.WAIT
                         
                 elif traffic_sign_type == TrafficSign.PARKING_SIGN.value:
                     if self.run_state == RunStates.RUNNING:
@@ -199,7 +202,7 @@ class actionNODE:
                         if DEBUG:
                             print("Running slow towards CROSSWALK")
                         self.speed_mod = SpeedMod.LOW
-                        self.lock_state(RunStates.CROSSWALK)
+                        self.run_state = RunStates.CROSSWALK
                 
                 elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
                     # traffic_sign_type = TrafficSign.PRIORITY_SIGN
@@ -230,10 +233,6 @@ class actionNODE:
                     # traffic_sign_type = TrafficSign.NO_ENTRY_SIGN
                     if self.run_state == RunStates.RUNNING:
                         print("Can not go this way")
-                
-                elif traffic_sign_type == TrafficSign.NO_SIGN.value:
-                    if self.run_state != RunStates.CROSSWALK:
-                        self.run_state = RunStates.RUNNING
                 
     def traffic_light_check(self, msg):
         global traffic_light_id
@@ -347,6 +346,25 @@ class actionNODE:
         else:
             self.speed_mod = SpeedMod.NORMAL
             self.lock_state(RunStates.RUNNING)
+            
+    def move_to_destination(self, des_x, des_y):
+        MAX_STEER = 23.00
+        while abs(des_x - self.cur_x) >= 0.3 and abs(des_y - self.cur_y) >= 0.3:
+            diff_x = des_x - self.cur_x
+            diff_y = des_y - self.cur_y
+            
+            ang_rad = math.atan(diff_x / diff_y)
+            ang_deg = ang_rad * (180 / math.pi)
+            
+            if abs(ang_deg) > MAX_STEER:
+                if ang_deg > 0:
+                    ang_deg = MAX_STEER
+                else:
+                    ang_deg = -MAX_STEER
+            self.control.setSteer(ang_deg)
+            self.control.setSpeed(0.15)
+            rospy.sleep(0.5)
+            self.control.brake(0)
             
     def auto_control(self):
         if self.sys_state == SystemStates.ONLINE:
