@@ -42,6 +42,7 @@ from utils.msg      import perception, lane
 #import object detection
 import numpy as np
 import cv2
+from lane_detection.core.camera import Camera
 from object_detection.network.edgetpumodel import EdgeTPUModel
 from object_detection.network.utils import plot_one_box, Colors, get_image_tensor
 
@@ -93,17 +94,25 @@ class perceptionNODE():
         
         # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
         #self.command_publisher = rospy.Publisher("/automobile/perception", String)
-        #======CAMERA======
         self.bridge = CvBridge()
-        self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
-        #self.lane_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._lane)
+        #======CAMERA======
+        self.camera = Camera()
+        self.camera.load_calibrate_info('/home/pi/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/core/save/calibration.pkl')
+        self._image = None
+        self.lane_publisher = rospy.Publisher("/automobile/lane", perception, queue_size =1)
+        self.bev_publisher = rospy.Publisher("/automobile/bev", Image, queue_size = 1)
+        self.bev_thresh_publisher = rospy.Publisher("/automobile/thresh", Image, queue_size = 1)
+        self.lane_info_publisher = rospy.Publisher("/automobile/lane_info",lane, queue_size = 1)
+        
+        self.lane_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self._lane)
+        
         #======OBJECT DETECTION======
+        self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
         self.model_path = "object_detection/weights/traffic.tflite"
         self.names = "object_detection/data.yaml"
         self.conf_thresh = 0.5
         self.iou_thresh = 0.65
         self.device = 0
-        
         self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
         #self.model = None 
         
@@ -170,7 +179,6 @@ class perceptionNODE():
         
         """
         Send message via topic "automobile/lane"
-
         Message format:
             float32 steer_angle
             float32 radius_of_curvature
@@ -178,7 +186,6 @@ class perceptionNODE():
             int8 left_lane_type
             int8 right_lane_type
             int32 midpoint
-
             left_lane_type, right_lane_type, radius, steer_angle
         """
         calibrate_scence = self.camera.undistort(scene)
@@ -188,8 +195,8 @@ class perceptionNODE():
         if lane_detection_result is not None:
             msg.steer_angle             = lane_detection_result['steer_angle']
             msg.radius_of_curvature     = lane_detection_result['radius'] 
-            msg.left_lane_type          =   lane_detection_result['left_lane_type'] 
-            msg.left_lane_type          =    lane_detection_result['right_lane_type']
+            msg.left_lane_type          = lane_detection_result['left_lane_type'] 
+            msg.left_lane_type          = lane_detection_result['right_lane_type']
         else:
             
             msg.steer_angle             = 0
@@ -235,7 +242,10 @@ class perceptionNODE():
         #print("Image to be send: {}".format(type(image)))
         send_image = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
         self.bev_publisher.publish(send_image)
-
+        
+    def send_BEV_thresh(self, img):
+        send_image_thresh = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
+        self.bev_thresh_publisher.publish(send_image_thresh)
     # ===================================== READ ==========================================
     def _read(self):
         """ It's represent the reading activity on the the serial.
