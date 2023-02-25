@@ -254,6 +254,9 @@ class actionNODE:
         global light_color
         light_color[0] = msg.data
         
+        if DEBUG:
+            print(light_color)
+        
     def semaphore_slave_update(self, msg):
         global light_color
         light_color[1] = msg.data
@@ -401,15 +404,13 @@ class actionNODE:
         global light_color
         while not rospy.is_shutdown(): 
             # while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
-            #     print("Waiting for start signal")
             if self.sys_state == SystemStates.OFFLINE:
                 if DEBUG: 
                     print("WAITING FOR START SIGNAL")
-                    
                 if traffic_light_id:
                     if light_color[traffic_light_id - 1] == TrafficLightRule.GREEN_LIGHT.value:
                         self.sys_state = SystemStates.ONLINE
-                        
+                            
             elif self.sys_state == SystemStates.ONLINE:
                 self.auto_control()
             

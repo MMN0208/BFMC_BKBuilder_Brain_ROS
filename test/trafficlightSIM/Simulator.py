@@ -49,7 +49,7 @@ class sim(Thread):
         
         # Communication parameters, create and bind socket
         self.PORT = 50007
-        self.BCAST_ADDRESS = '192.168.65.4'
+        self.BCAST_ADDRESS = '192.168.50.125'
 
         # Create a UDP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
