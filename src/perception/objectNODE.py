@@ -139,8 +139,13 @@ class objectNODE():
                 c = int(cls)  # integer class
                 traffic.traffic_sign_type = c
                 
-                d = self.depth[int(xyxy[0]):int(xyxy[2]), int(xyxy[1]):int(xyxy[3])]
-                print(f"Depth:{d}")
+                d = self.depth
+                #d = self.depth[int(xyxy[0]):int(xyxy[2]), int(xyxy[1]):int(xyxy[3])]
+                print(f"size bbox{int(xyxy[0])}:{int(xyxy[1])}:{int(xyxy[2])}:{int(xyxy[3])}")
+                print(f"Depth:{d.shape}")
+                d_ = self.depth[int(xyxy[0]):int(xyxy[2]), int(xyxy[1]):int(xyxy[3])]
+                print(f"size d_:{d_.shape}")
+                print(f"Depth of {self.model.names[c]}:{d_.mean()}")
                 
                 label = f"Class:{self.model.names[c]}:{xyxy}"
                 

@@ -338,11 +338,11 @@ class Camera():
     def angleCalculator(self, img_angle):
 
         angleDegree = 0
-        img_angle = cv.resize(img_angle, (144, 144))
+        img_angle = cv.resize(img_angle, (200, 200))
         center_x, center_y = self.computeCenter(img_angle)
 
         if center_x != 0 or center_y != 0:
-            slope = (center_x - 72) / float (center_y - 144) # (72, 144) is center of (144, 144) image
+            slope = (center_x - 100) / float (center_y - 200) # (72, 144) is center of (144, 144) image
             angleRadian = float(math.atan(slope))
             angleDegree = float(angleRadian * 180.0 / math.pi)
 
@@ -355,9 +355,9 @@ class Camera():
         count = 0
         center_x = 0
         center_y = 0
-        for i in range(0, 144):
-            for j in range(0, 144):
-                if roadImg[i][j] >= 200:
+        for i in range(0, 200):
+            for j in range(0, 200):
+                if roadImg[i][j] >= 210:
                     count += 1
                     center_x += j
                     center_y += i
@@ -368,7 +368,21 @@ class Camera():
             center_y = center_y / count
 
         return center_x, center_y
+    
+    def computeAngleTest(self, roadImg):
+        center_x = image.shape[1] // 2
+        M = cv.moments(roadImg)
+        if M["m00"] != 0:
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
+        else:
+            cx = center_x
+            cy = img.shape[0] // 2
 
+        angle = np.arctan((cx - center_x) / (img.shape[0] - cy))
+
+        angle_deg = angle * 180 / np.pi
+        return angle_deg 
 
     def _runDetectLane(self, img):
 
@@ -385,7 +399,8 @@ class Camera():
         find_lane_result['BEV'] = warped
 
         if find_lane_result['angle_change']:
-            steer_angle = self.angleCalculator(thresh)
+            #steer_angle = self.angleCalculator(thresh)
+            steer_angle = self.computeAngleTest(thresh)
             find_lane_result['steer_angle'] = steer_angle
         
         ################## Visualization #################

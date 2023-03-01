@@ -107,17 +107,17 @@ class perceptionNODE():
         self.lane_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self._lane)
         
         #======OBJECT DETECTION======
-        self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
-        self.model_path = "object_detection/weights/traffic.tflite"
-        self.names = "object_detection/data.yaml"
-        self.conf_thresh = 0.5
-        self.iou_thresh = 0.65
-        self.device = 0
-        self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
-        #self.model = None 
+        # self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
+        # self.model_path = "object_detection/weights/traffic.tflite"
+        # self.names = "object_detection/data.yaml"
+        # self.conf_thresh = 0.5
+        # self.iou_thresh = 0.65
+        # self.device = 0
+        # self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
+        # #self.model = None 
         
-        self.colors = Colors()
-        #.
+        # self.colors = Colors()
+        # #.
         
     # ===================================== RUN ==========================================
     def run(self):
@@ -139,34 +139,34 @@ class perceptionNODE():
         rospy.spin()   
     
     # ===================================== OBJECT DETECT ========================================
-    def _object(self, msg):
-        """Object detection callback
-        """
-        image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        output_image = image
-        full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
-        pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
-        #print(f"DetectionProcess{net_image.shape}")
-        det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
+    # def _object(self, msg):
+    #     """Object detection callback
+    #     """
+    #     image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+    #     #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #     output_image = image
+    #     full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
+    #     pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
+    #     #print(f"DetectionProcess{net_image.shape}")
+    #     det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
                 
                 
-        for *xyxy, conf, cls in reversed(det): #Process prediction loop
-            '''
-            xyxy (List): bounding box
-            conf (int): prediction percentage
-            cls (int): class index of prediction
-            '''
-            c = int(cls)  # integer class
-            label = f'{self.model.names[c]} {conf:.2f}' #Set label to the class detected
-            command = f'DETECT:{label}:{xyxy}'
-            #self.command_publisher.publish(command)
-            output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
+    #     for *xyxy, conf, cls in reversed(det): #Process prediction loop
+    #         '''
+    #         xyxy (List): bounding box
+    #         conf (int): prediction percentage
+    #         cls (int): class index of prediction
+    #         '''
+    #         c = int(cls)  # integer class
+    #         label = f'{self.model.names[c]} {conf:.2f}' #Set label to the class detected
+    #         command = f'DETECT:{label}:{xyxy}'
+    #         #self.command_publisher.publish(command)
+    #         output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
         
-        cv2.imshow("test", output_image)       
-        cv2.waitKey(1)      
-        tinference, tnms = self.model.get_last_inference_time()
-        print("Frame done in {}".format(tinference+tnms))
+    #     cv2.imshow("test", output_image)       
+    #     cv2.waitKey(1)      
+    #     tinference, tnms = self.model.get_last_inference_time()
+    #     print("Frame done in {}".format(tinference+tnms))
      
     # ===================================== LANE DETECT ========================================
     

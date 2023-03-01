@@ -121,7 +121,9 @@ class actionNODE:
         #MORE SUBSCRIBING IF AVAILABLE
         
         #INIT STATE
-        self.sys_state = SystemStates.OFFLINE
+        # self.sys_state = SystemStates.OFFLINE
+        self.sys_state = SystemStates.ONLINE   #Test
+
         self.run_state = RunStates.RUNNING
         self.cur_x = 0
         self.cur_y = 0
@@ -203,6 +205,7 @@ class actionNODE:
                             print("Running slow towards CROSSWALK")
                         self.speed_mod = SpeedMod.LOW
                         self.run_state = RunStates.CROSSWALK
+                        self.sign_start_time = time.time()
                 
                 elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
                     # traffic_sign_type = TrafficSign.PRIORITY_SIGN
@@ -290,17 +293,21 @@ class actionNODE:
                 self.speed_mod = NORMAL
                 
     def running_action(self):
-        self.control.setSteer(self.steer_angle)
-        OFFSET_ANGLE = 0.05
+        OFFSET_ANGLE = 0.03
+        MAX_SPEED = 0.3
+        MAX_STEER = 30.0
         # MOD = 10
-        offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
-        if DEBUG_MOD_SPEED:
-            print("offset speed: ",offset_speed)
-        if (self.base_speed - offset_speed) > 0:
-            self.control.setSpeed(self.base_speed - offset_speed)
-        else:
-            self.speed_action()
-        
+        # offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
+        # if DEBUG_MOD_SPEED:
+        #     print("offset speed: ",offset_speed)
+        # if (self.base_speed - offset_speed) > 0:
+        #     self.control.setSpeed(self.base_speed - offset_speed)
+        # else:
+        #     self.speed_action()
+        new_speed = MAX_SPEED - (math.fabs(self.steer_angle)/ MAX_STEER * MAX_SPEED)
+        self.control.setSpeed(new_speed)
+        self.control.setSteer(self.steer_angle)
+
     def wait_action(self):
         global traffic_sign_type
         global traffic_light_id
@@ -333,6 +340,7 @@ class actionNODE:
         
         if pedestrian == False:
             self.speed_action()
+            
         else:
             wait_for_pedestrian = True
             self.run_state = RunStates.WAIT
