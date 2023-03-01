@@ -339,8 +339,9 @@ class actionNODE:
         global pedestrian
         
         if pedestrian == False:
+            if (time.time() - self.sign_start_time) >= 3:
+                self.lock_state(RunStates.RUNNING)
             self.speed_action()
-            
         else:
             wait_for_pedestrian = True
             self.run_state = RunStates.WAIT
