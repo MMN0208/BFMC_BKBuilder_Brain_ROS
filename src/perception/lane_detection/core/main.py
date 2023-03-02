@@ -94,7 +94,9 @@ if __name__ == '__main__':
     #             # # cv.imshow("Thresh", tmp)
                     cv.waitKey(1)
 
-    # flag, frame = video.read()
+    #     except Exception as e:
+    #         print(e)
+    
     # frame = cv.imread(IMG_SRC)
     # frame = cv.resize(frame, IMG_SIZE)
     # calibrate_img = camera.undistort(frame)
@@ -117,8 +119,7 @@ if __name__ == '__main__':
     #     cv.waitKey(1)
     # cv.destroyAllWindows()
             
-        except Exception as e:
-            print(e)
+        
 
 
    
