@@ -43,60 +43,83 @@ if __name__ == '__main__':
     camera.load_calibrate_info(CALIBRATE_PICKLE)
 
     # [0, 350], [640, 350], [400, 50], [100, 50]
+    
     while True:
         try:
             flag, frame = video.read()
             if flag:
                 
                 
-                #   ====================    MAIN FLOW   =====================
-                frame = cv.resize(frame, IMG_SIZE)
+    # #             #   ====================    MAIN FLOW   =====================
+                # frame = cv.resize(frame, IMG_SIZE)
+                frame = cv.imread(IMG_SRC)
                 calibrate_img = camera.undistort(frame)
                
-                # plt.imsave(SAVE_DIR + 'bev.jpeg', calibrate_img)
-                # plt.imshow(calibrate_img)
-                # plt.show()
+    # #             # # plt.imsave(SAVE_DIR + 'bev.jpeg', calibrate_img)
+    # #             # # plt.imshow(calibrate_img)
+    # #             # # plt.show()
 
-                if DEBUG_VISUAL:
-                    test_result, preprocess_results, detection_results = camera._runDetectLane(calibrate_img)    #   TEST
-                else:
-                    detection_results = camera._runDetectLane(calibrate_img)
+    # #             # # if DEBUG_VISUAL:
+    # #             # #     test_result, preprocess_results, detection_results = camera._runDetectLane(calibrate_img)    #   TEST
+    # #             # # else:
+    # #             # detection_results = camera._runDetectLane(calibrate_img)
 
-                plottable = detection_results['thresh']
+    # #             # plottable = detection_results['thresh']
 
-                steer = detection_results['steer_angle']
-                print("Angle = {}".format(steer))
+    # #             # steer = detection_results['steer_angle']
+    # #             # print("Angle = {}".format(steer))
                 
-                if DEBUG_VISUAL:
-                    test_img = np.zeros((720, 1280))
-                    transform_mat = preprocess_results['transformed_view']
-                    inverse_mat = preprocess_results['inverse_transform']
-                    birdeye = preprocess_results['birdeye_img']
-                    humanview = cv.warpPerspective(birdeye, inverse_mat, (640, 360))
+    # #             # if DEBUG_VISUAL:
+    # #             #     test_img = np.zeros((720, 1280))
+    # #             #     transform_mat = preprocess_results['transformed_view']
+    # #             #     inverse_mat = preprocess_results['inverse_transform']
+    # #             #     birdeye = preprocess_results['birdeye_img']
+    # #             #     humanview = cv.warpPerspective(birdeye, inverse_mat, (640, 360))
 
 
-                    # cv.imshow("BEV", birdeye)
-                    # cv.imshow("Normal View", humanview)
-                cv.imshow("Detection", plottable)                           #TEST
-                ######################### TESTING   #########################
+    # #             #     # cv.imshow("BEV", birdeye)
+    # #             #     # cv.imshow("Normal View", humanview)
+    # #             # cv.imshow("Detection", plottable)                  #TEST
+    # #             ######################### TESTING   #########################
+                while True:
+                    output = camera.laneDetector.processor.process(calibrate_img)
+                    thresh = output['thresh'] 
+                    cv.imshow('Thresh', thresh)
+    #             # # # cv.imshow('points', points_img)
                 
-                # output = camera.laneDetector.processor.process(calibrate_img)
-                # while True:
-                #     output = camera.laneDetector.processor.process(calibrate_img)
-                #     thresh = output['birdeye_img'] 
-                #     cv.imshow('Thresh', thresh)
-                #     cv.waitKey(1)
-                # # # cv.imshow('points', points_img)
-                
-                # # cv.imshow('Detection', detection_img)
-                #############################################################
-                # cv.imshow('Main', output['birdeye']['birdeye'])
-                # cv.imshow("Test", out_test)
-                # cv.imshow("Thresh", tmp)
-                cv.waitKey(1)
+    #             # # # cv.imshow('Detection', detection_img)
+    #             # #############################################################
+    #             # # cv.imshow('Main', output['birdeye']['birdeye'])
+    #             # # cv.imshow("Test", out_test)
+    #             # # cv.imshow("Thresh", tmp)
+                    cv.waitKey(1)
+
+    # flag, frame = video.read()
+    # frame = cv.imread(IMG_SRC)
+    # frame = cv.resize(frame, IMG_SIZE)
+    # calibrate_img = camera.undistort(frame)
+    # # src, _ = trackers.getSrcView()
+
+
+    # img_copy = calibrate_img.copy()
+    # # lines = src.reshape(-1,1,2)
+    # lines = np.array([[320, 633], [1170,  633], [853, 440], [553, 440]], dtype=np.int32).reshape(-1,1,2)
+    
+    # while True:
+
+    #     # lines,_ = trackers.getSrcView()
+    #     points = lines.reshape(-1,1,2)
+    #     solid = cv.polylines(calibrate_img, [points], True, (0,255,0), 2)
+    #     calibrate_img = img_copy
+        
+    #     calibrate_img = img_copy
+    #     cv.imshow("img", solid)
+    #     cv.waitKey(1)
+    # cv.destroyAllWindows()
+            
         except Exception as e:
             print(e)
 
-    
+
    
 

@@ -119,7 +119,7 @@ class Trackbars:
         self.initSrcView()
         self.initDstView()
 
-    def initSrcView(self, width = 640, height = 360):
+    def initSrcView(self, width = 1280, height = 720):
         cv.namedWindow('SrcView')
         cv.resizeWindow("SrcView", 360, 240)
         
@@ -157,7 +157,7 @@ class Trackbars:
         htr = cv.getTrackbarPos('HTR', 'SrcView')
         wbr = cv.getTrackbarPos('WBR', 'SrcView')
         hbr = cv.getTrackbarPos('HBR', 'SrcView')
-        srcPts= np.array([[wbl, hbl], [wbr, hbr], [wtr, htr], [wtl, htl]], dtype=np.float32)
+        srcPts= np.array([[wbl, hbl], [wbr, hbr], [wtr, htr], [wtl, htl]], dtype=np.int32)
         # srcPts = np.array([[wtl, htl], [wtr, htr], [wbr, hbr], [wbl, hbl]], dtype=np.float32)
         return srcPts, [(wbl, hbl), (wtr, htr)]
 	
@@ -188,7 +188,7 @@ class Trackbars:
         hTop = cv.getTrackbarPos("HeightSrcTop", "Src")
         return [(wBot, hBot), (wTop, hTop)]
 
-    def initPointTrackings(self, initVals, width = 640, height = 360):
+    def initPointTrackings(self, initVals, width = 1280, height = 720):
         """
         :params: initVals = (Width Top, Height Top, Width Bottom, Height Bottom)
         """
@@ -200,14 +200,46 @@ class Trackbars:
         cv.createTrackbar("Height Bottom", "ViewPerspective", initVals[3], height, self.doNothing)
     
     
-    def getValPoints(self, width = 640, height = 360):
+    def getValPoints(self, width = 1280, height = 720):
         wTop = cv.getTrackbarPos("Width Top", "ViewPerspective")
         hTop = cv.getTrackbarPos("Height Top", "ViewPerspective")
         wBot = cv.getTrackbarPos("Width Bottom", "ViewPerspective")
         hBot = cv.getTrackbarPos("Height Bottom", "ViewPerspective")
         points = np.array([[wBot, hBot], [width - wBot, hBot], [wTop, hTop], [width - wTop, hTop]], dtype = np.float32)
         return points
-	
+    
+    def initLowerWhite(self):
+
+        cv.namedWindow("LowerWhite")
+        cv.resizeWindow("LowerWhite", 360, 240)
+        cv.createTrackbar("Num1", "LowerWhite",0, 255, self.doNothing)
+        cv.createTrackbar("Num2", "LowerWhite",0, 255, self.doNothing)
+        cv.createTrackbar("Num3", "LowerWhite",0, 255, self.doNothing)
+    
+    def getLowerWhite(self):
+
+        num1 = cv.getTrackbarPos("Num1", "LowerWhite")
+        num2 = cv.getTrackbarPos("Num2", "LowerWhite")
+        num3 = cv.getTrackbarPos("Num3", "LowerWhite")
+
+        return np.array([num1, num2, num3])
+
+    def initUpperWhite(self):
+
+        cv.namedWindow("UpperWhite")
+        cv.resizeWindow("UpperWhite", 360, 240)
+        cv.createTrackbar("Num1", "UpperWhite",0, 255, self.doNothing)
+        cv.createTrackbar("Num2", "UpperWhite",0, 255, self.doNothing)
+        cv.createTrackbar("Num3", "UpperWhite",0, 255, self.doNothing)
+    
+    def  getUpperWhite(self):
+
+        num1 = cv.getTrackbarPos("Num1", "UpperWhite")
+        num2 = cv.getTrackbarPos("Num2", "UpperWhite")
+        num3 = cv.getTrackbarPos("Num3", "UpperWhite")
+
+        return np.array([num1, num2, num3])
+
     def doNothing(self):
         pass
 

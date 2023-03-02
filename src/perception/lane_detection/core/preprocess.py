@@ -75,10 +75,10 @@ class Preprocessor:
     
     
     def gaussian_blur(self, img):
-        return cv.GaussianBlur(img, (3,3), 0)
+        return cv.GaussianBlur(img, (3, 3), 0)
 
     def threshold(self, img):
-        _, img = cv.threshold(img, 200, 250, cv.THRESH_BINARY) 
+        _, img = cv.threshold(img, 130, 255, cv.THRESH_BINARY) 
         return img
 
     def hls_threshold(self, img, lower = 200, upper = 255):

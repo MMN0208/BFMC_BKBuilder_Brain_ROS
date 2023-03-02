@@ -8,7 +8,7 @@ from laneDetect import LaneDetection
 from collections import deque
 import random
 
-DEBUG_VISUAL = True
+DEBUG_VISUAL = False
 class Lane:
 
     def __init__(self, maxSamples=4):
@@ -235,7 +235,8 @@ class Camera():
         results['right_lane_inds'] = right_lane_inds
         results['left_lane_type'] = 1
         results['right_lane_type'] = 0
-        results['radius'] = self.get_radiusCurvature()
+        # results['radius'] = self.get_radiusCurvature()
+        results['radius'] = 0
         
         # print("Left lane coordinates: {}".format(left_lane_coor))
         # print("Right lane coordinates: {}".format(right_lane_coor))
@@ -361,7 +362,7 @@ class Camera():
                     center_y += i
     
 
-        if center_x != 0 or center_y != 0 or count != 0:
+        if (center_x != 0 or center_y != 0) and count != 0:
             center_x = center_x / count
             center_y = center_y / count
 
