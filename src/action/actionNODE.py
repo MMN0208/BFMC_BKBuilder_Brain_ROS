@@ -118,6 +118,10 @@ class actionNODE:
         self.Semaphorestart_subscriber = rospy.Subscriber("/automobile/semaphore/start", Byte, self.semaphore_start_update)
         #MORE SUBSCRIBING IF AVAILABLE
         
+        # STEERING PID 
+        self.previous_err = 0
+        self.integral_err = 0
+        
         #INIT STATE
         # self.sys_state = SystemStates.OFFLINE
         self.sys_state = SystemStates.ONLINE   #Test
@@ -153,6 +157,28 @@ class actionNODE:
                 self.unlock = 1
                 self.lock = 0
                 
+    # STEERING PID function
+    def steering_pid(self, input):
+        Ki = 0.2
+        Kp = 0.4
+        Kd = 0.1
+        
+        processed = input
+        setpoint = float(math.floor(input))
+        error = setpoint - processed
+        
+        integral_err = self.integral_err + error
+        derivative_err = error - self.previous_err
+        
+        # calculate da shitz
+        output = Kp * error + Ki * integral_err + Kd * derivative_err
+        
+        # save for next iteration
+        self.previous_err = error
+        self.integral_err = integral_err
+        
+        return output
+                
     def lane_check(self, msg):
         global MAX_STEER
         
@@ -170,14 +196,16 @@ class actionNODE:
                     self.lane_switchable = False
             if DEBUG_ANGLE:
                 print("streer angle: ",msg.steer_angle)
+                
+            processed_steer_angle = self.steering_pid(msg.steer_angle)
             
-            if abs(msg.steer_angle) > MAX_STEER:
-                if msg.steer_angle > 0:
+            if abs(processed_steer_angle) > MAX_STEER:
+                if processed_steer_angle > 0:
                     self.steer_angle = MAX_STEER
                 else:
                     self.steer_angle = -MAX_STEER    
             else:
-                self.steer_angle = msg.steer_angle
+                self.steer_angle = processed_steer_angle
         
     def pedestrian_check(self, msg):
         if self.sys_state == SystemStates.ONLINE:

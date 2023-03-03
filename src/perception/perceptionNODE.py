@@ -131,11 +131,14 @@ class perceptionNODE():
                 if self._image is not None:
                     #self.send_BEV()
                     self.send_perceptionInfo(self._image)
-                    self.send_laneInfo(self._image)
+
+    #                self.send_laneInfo(self._image)
                     print('hello world')
             except Exception as e:
                 print(e)
-        #self._read() 
+
+
+            time.sleep(0.1)        #self._read() 
         rospy.spin()   
     
     # ===================================== OBJECT DETECT ========================================

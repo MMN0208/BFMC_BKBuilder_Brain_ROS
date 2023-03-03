@@ -32,6 +32,9 @@
 import json
 import time
 import rospy
+import matplotlib.pyplot as plt
+import numpy as np
+import cv2
 
 from std_msgs.msg      import String
 from sensor_msgs.msg import Image
@@ -39,8 +42,7 @@ from utils.msg import traffic_sign
 from utils.srv        import subscribing, subscribingResponse
 from cv_bridge       import CvBridge
 
-import numpy as np
-import cv2
+
 from object_detection.network.edgetpumodel import EdgeTPUModel
 from object_detection.network.utils import plot_one_box, Colors, get_image_tensor, xyxy2xywh
 
@@ -80,6 +82,7 @@ class objectNODE():
         #self.model = None 
         
         self.colors = Colors()
+        self.colormap = plt.get_cmap('inferno')
         #.
         self.depth = np.random.rand(480, 848)
     # ===================================== DEPTH ==========================================
@@ -102,7 +105,11 @@ class objectNODE():
         """
         #print("down here")
         image = self.bridge.imgmsg_to_cv2(msg, "rgb8")
+
         output_image = image
+        heatmap = self.depth
+        heatmap = cv2.applyColorMap(heatmap.astype(np.uint8), cv2.COLORMAP_HOT)
+
         #print(f"IMAGE:{image.shape}")
         full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
         pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
@@ -111,6 +118,7 @@ class objectNODE():
         det = pred[0]
         traffic = traffic_sign()
         traffic.traffic_sign_type = 9
+        
         #Process predictions
         if len(det):
             # Rescale boxes from img_size to im0 size
@@ -141,21 +149,30 @@ class objectNODE():
                 
                 d = self.depth
                 #d = self.depth[int(xyxy[0]):int(xyxy[2]), int(xyxy[1]):int(xyxy[3])]
-                print(f"size bbox={int(xyxy[0])}:{int(xyxy[1])}:{int(xyxy[2])}:{int(xyxy[3])}")
-                print(f"Depth:{d.shape}")
-                d_ = self.depth[int(xyxy[1]):int(xyxy[3]), int(xyxy[0]):int(xyxy[2])]
-                print(f"size d_:{d_.shape}")
-                print(f"Depth of {self.model.names[c]}:{np.median(d_)}")
+                #print(f"size bbox={int(xyxy[0])}:{int(xyxy[1])}:{int(xyxy[2])}:{int(xyxy[3])}")
+                #print(f"Depth:{d.shape}")
+                #d_ = self.depth[int(xyxy[1]):int(xyxy[3]), int(xyxy[0]):int(xyxy[2])]
+                #print(f"size d_:{d_.shape}")
+                #print(f"Depth of {self.model.names[c]}:{np.median(d_)}")
                 
-
+                
                 label = f"Class:{self.model.names[c]}:{xyxy}"
-                
-                                
+
                 self.traffic_light_publisher.publish(traffic)
                 output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True))
+                c1, c2 = (int(xyxy[0]), int(xyxy[1])), (int(xyxy[2]), int(xyxy[3]))
+                color=(128, 0, 0)
+                cv2.rectangle(heatmap, c1, c2, color, thickness=3, lineType=cv2.LINE_AA)
         else:        
             self.traffic_light_publisher.publish(traffic)
         #PROCESS
+        
+        #heatmap = cv2.applyColorMap(self.depth, cv2.COLORMAP_HOT) 
+        #heatmap = (self.colormap(self.depth)* 2**16).astype(np.uint8)[:,:,:3]
+        #heatmap = cv2.cvtColor(heatmap, cv2.COLOR_RGB2BGR)
+        #print(f"HEATMAP:{heatmap.shape}")
+        #self.depth_debug_publisher.publish(self.bridge.cv2_to_imgmsg(heatmap, "rgb8"))
+        
         imageObject = self.bridge.cv2_to_imgmsg(output_image, "rgb8")
         out = pedestrian()
         out.image = imageObject
