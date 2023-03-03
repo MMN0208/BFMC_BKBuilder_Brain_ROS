@@ -399,8 +399,8 @@ class Camera():
         find_lane_result['BEV'] = warped
 
         if find_lane_result['angle_change']:
-            #steer_angle = self.angleCalculator(thresh)
-            steer_angle = self.computeAngleTest(thresh)
+            steer_angle = self.angleCalculator(thresh)
+            #steer_angle = self.computeAngleTest(thresh)
             find_lane_result['steer_angle'] = steer_angle
         
         ################## Visualization #################

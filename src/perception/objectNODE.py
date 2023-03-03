@@ -141,12 +141,13 @@ class objectNODE():
                 
                 d = self.depth
                 #d = self.depth[int(xyxy[0]):int(xyxy[2]), int(xyxy[1]):int(xyxy[3])]
-                print(f"size bbox{int(xyxy[0])}:{int(xyxy[1])}:{int(xyxy[2])}:{int(xyxy[3])}")
+                print(f"size bbox={int(xyxy[0])}:{int(xyxy[1])}:{int(xyxy[2])}:{int(xyxy[3])}")
                 print(f"Depth:{d.shape}")
-                d_ = self.depth[int(xyxy[0]):int(xyxy[2]), int(xyxy[1]):int(xyxy[3])]
+                d_ = self.depth[int(xyxy[1]):int(xyxy[3]), int(xyxy[0]):int(xyxy[2])]
                 print(f"size d_:{d_.shape}")
-                print(f"Depth of {self.model.names[c]}:{d_.mean()}")
+                print(f"Depth of {self.model.names[c]}:{np.median(d_)}")
                 
+
                 label = f"Class:{self.model.names[c]}:{xyxy}"
                 
                                 

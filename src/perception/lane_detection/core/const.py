@@ -16,9 +16,9 @@ IMG_SIZE  = (1280, 720)
 # IMG_SRC = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/frame_test/frame_1001.png' 
 
 W, H = IMG_SIZE
-wTop =  752
+wTop =  957
 hTop =  0
-wBot =  399 
+wBot =  405 
 hBot =  720
 
 # wTop = 426
@@ -31,7 +31,7 @@ params_processing['sobel_kernel_size'] = 3
 params_processing['lower_white'] = np.array([0, 150, 10])
 params_processing['upper_white'] = np.array([250, 250, 255])
 params_processing['dst_points'] = np.array([[wBot, hBot], [W - wBot, hBot], [wTop, hTop], [W - wTop, hTop]], dtype = np.float32)
-params_processing['src_points'] = np.array([[180, 590], [1136, 617], [712, 344], [527, 320]], dtype=np.float32)
+params_processing['src_points'] = np.array([[320, 633], [1170, 633], [853   , 440], [533, 440]], dtype=np.float32)
 """ ======================= LANE DETECTION  ======================================"""
 params_lane_detection['ym_per_pix'] = 20.0 / 360.0
 params_lane_detection['xm_per_pix'] = 40.0 / 640.0 

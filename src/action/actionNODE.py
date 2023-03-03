@@ -80,7 +80,7 @@ testTRAFFICLIGHT    =  True
 testTRAFFICSIGN     =  False
 testCROSSWALK       =  True
 DEBUG               =  True
-DEBUG_ANGLE         =  False
+DEBUG_ANGLE         =  True
 DEBUG_MOD_SPEED     =  False
 
 # =============================== BUFFER =================================================
@@ -304,7 +304,7 @@ class actionNODE:
         #     self.control.setSpeed(self.base_speed - offset_speed)
         # else:
         #     self.speed_action()
-        new_speed = MAX_SPEED - (math.fabs(self.steer_angle)/ MAX_STEER * MAX_SPEED)
+        new_speed = MAX_SPEED - (math.fabs(self.steer_angle) / MAX_STEER * MAX_SPEED)
         self.control.setSpeed(new_speed)
         self.control.setSteer(self.steer_angle)
 
