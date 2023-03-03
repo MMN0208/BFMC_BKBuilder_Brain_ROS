@@ -47,14 +47,8 @@ class TrafficSign(Enum):
     PRIORITY_SIGN = 4
     ROUNDABOUT_SIGN = 5
     STOP_SIGN = 6
-    
-    
-    
     HIGHWAY_ENTRANCE_SIGN = 8
     HIGHWAY_EXIT_SIGN = 7
-    
-    
-    
     NO_SIGN = 9
     
 class TrafficLightRule(Enum):
@@ -70,6 +64,10 @@ class SpeedMod(Enum):
     NORMAL = 0
     HIGH = 1
     LOW = 2
+    
+# ============================ CAR CONSTRAINTS ===========================================
+MAX_SPEED = 0.4
+MAX_STEER = 23.0
 
 # =============================== CONFIG =================================================
 testRUNNING         =  True
@@ -156,6 +154,8 @@ class actionNODE:
                 self.lock = 0
                 
     def lane_check(self, msg):
+        global MAX_STEER
+        
         if self.sys_state == SystemStates.ONLINE:
             if self.lane == LanePosition.RIGHT_LANE: #on the right side of the road, check left lane type for lane switching
                 if msg.left_lane_type == 1: #dotted lane
@@ -170,7 +170,14 @@ class actionNODE:
                     self.lane_switchable = False
             if DEBUG_ANGLE:
                 print("streer angle: ",msg.steer_angle)
-            self.steer_angle = msg.steer_angle
+            
+            if abs(msg.steer_angle) > MAX_STEER:
+                if msg.steer_angle > 0:
+                    self.steer_angle = MAX_STEER
+                else:
+                    self.steer_angle = -MAX_STEER    
+            else:
+                self.steer_angle = msg.steer_angle
         
     def pedestrian_check(self, msg):
         if self.sys_state == SystemStates.ONLINE:
@@ -293,9 +300,8 @@ class actionNODE:
                 self.speed_mod = NORMAL
                 
     def running_action(self):
-        OFFSET_ANGLE = 0.03
-        MAX_SPEED = 0.3
-        MAX_STEER = 30.0
+        global MAX_SPEED
+        global MAX_STEER
         # MOD = 10
         # offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
         # if DEBUG_MOD_SPEED:
@@ -304,7 +310,7 @@ class actionNODE:
         #     self.control.setSpeed(self.base_speed - offset_speed)
         # else:
         #     self.speed_action()
-        new_speed = MAX_SPEED - (math.fabs(self.steer_angle)/ MAX_STEER * MAX_SPEED)
+        new_speed = MAX_SPEED - (math.fabs(self.steer_angle) / MAX_STEER * MAX_SPEED)
         self.control.setSpeed(new_speed)
         self.control.setSteer(self.steer_angle)
 
