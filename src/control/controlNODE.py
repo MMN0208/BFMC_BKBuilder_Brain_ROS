@@ -8,7 +8,7 @@ import rospy
 from std_msgs.msg      import String
 from utils.srv        import subscribing, subscribingResponse
 
-DEBUG_CONTROL = 1
+DEBUG_CONTROL = 0
 
 class controlNODE():
     def __init__(self):
@@ -58,38 +58,38 @@ class controlNODE():
         self.command_publisher.publish(json.dumps(_brake))
         
         
-    # ===================================== RUN ==========================================
-    def run(self):
-        rospy.loginfo("starting controlNODE")
-        while not rospy.is_shutdown():
-            self.activatePID()
-            time.sleep(1)
-            self.setSteer(10)
-            time.sleep(0.1)
-            self.setSteer(15)
-            time.sleep(0.1)
-            self.setSteer(5)
-            time.sleep(0.1)
-            self.setSteer(10)
-            time.sleep(0.1)
-            self.setSteer(15)
-            time.sleep(0.1)
-            self.setSteer(5)
-            time.sleep(0.1)
-            self.setSteer(10)
-            time.sleep(0.1)
-            self.setSteer(15)
-            time.sleep(0.1)
-            self.setSteer(5)
-            time.sleep(0.1)
-            self.setSteer(10)
-            time.sleep(0.1)
-            self.setSteer(15)
-            time.sleep(0.1)
-            self.setSteer(5)
-            time.sleep(0.1)
+    # # ===================================== RUN ==========================================
+    # def run(self):
+    #     rospy.loginfo("starting controlNODE")
+    #     while not rospy.is_shutdown():
+    #         self.activatePID()
+    #         time.sleep(1)
+    #         self.setSteer(10)
+    #         time.sleep(0.1)
+    #         self.setSteer(15)
+    #         time.sleep(0.1)
+    #         self.setSteer(5)
+    #         time.sleep(0.1)
+    #         self.setSteer(10)
+    #         time.sleep(0.1)
+    #         self.setSteer(15)
+    #         time.sleep(0.1)
+    #         self.setSteer(5)
+    #         time.sleep(0.1)
+    #         self.setSteer(10)
+    #         time.sleep(0.1)
+    #         self.setSteer(15)
+    #         time.sleep(0.1)
+    #         self.setSteer(5)
+    #         time.sleep(0.1)
+    #         self.setSteer(10)
+    #         time.sleep(0.1)
+    #         self.setSteer(15)
+    #         time.sleep(0.1)
+    #         self.setSteer(5)
+    #         time.sleep(0.1)
 
         
-if __name__ == "__main__":
-    ctrlNod = controlNODE()
-    ctrlNod.run()
+# if __name__ == "__main__":
+#     ctrlNod = controlNODE()
+#     ctrlNod.run()

@@ -133,12 +133,11 @@ class perceptionNODE():
                     self.send_perceptionInfo(self._image)
 
     #                self.send_laneInfo(self._image)
-                    print('hello world')
             except Exception as e:
                 print(e)
 
 
-            time.sleep(0.1)        #self._read() 
+            #time.sleep(0.1)        #self._read() 
         rospy.spin()   
     
     # ===================================== OBJECT DETECT ========================================
@@ -194,6 +193,8 @@ class perceptionNODE():
         calibrate_scence = self.camera.undistort(scene)
         lane_detection_result = self.camera._runDetectLane(calibrate_scence)
         bev_img = lane_detection_result['BEV']
+        thresh_show = lane_detection_result['thresh']
+        #cv2.imshow("Thresh", thresh)
         msg = perception()
         if lane_detection_result is not None:
             msg.steer_angle             = lane_detection_result['steer_angle']

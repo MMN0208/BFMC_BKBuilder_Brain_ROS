@@ -338,12 +338,14 @@ class Camera():
     def angleCalculator(self, img_angle):
 
         angleDegree = 0
+        offset_x = 100
+        offset_y = 195
         img_angle = cv.resize(img_angle, (200, 200))
         center_x, center_y = self.computeCenter(img_angle)
-
+        print("Center y: {}".format(center_y))
         if center_x != 0 or center_y != 0:
-            slope = (center_x - 100) / float (center_y - 200) # (72, 144) is center of (144, 144) image
-            angleRadian = float(math.atan(slope))
+            slope = (center_x - offset_x) / float (center_y - offset_y) # (72, 144) is center of (144, 144) image
+            angleRadian = np.arctan(slope)
             angleDegree = float(angleRadian * 180.0 / math.pi)
 
         return angleDegree
@@ -357,7 +359,7 @@ class Camera():
         center_y = 0
         for i in range(0, 200):
             for j in range(0, 200):
-                if roadImg[i][j] >= 210:
+                if roadImg[i][j] >= 225:
                     count += 1
                     center_x += j
                     center_y += i

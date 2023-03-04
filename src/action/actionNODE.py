@@ -67,7 +67,7 @@ class SpeedMod(Enum):
     
 # ============================ CAR CONSTRAINTS ===========================================
 MAX_SPEED = 0.4
-MAX_STEER = 23.0
+MAX_STEER = 30.0
 
 # =============================== CONFIG =================================================
 testRUNNING         =  True
@@ -121,6 +121,7 @@ class actionNODE:
         # STEERING PID 
         self.previous_err = 0
         self.integral_err = 0
+        self.offset_steer = 0.2
         
         #INIT STATE
         # self.sys_state = SystemStates.OFFLINE
@@ -159,9 +160,9 @@ class actionNODE:
                 
     # STEERING PID function
     def steering_pid(self, input):
-        Ki = 0.2
+        Ki = 0.09
         Kp = 0.4
-        Kd = 0.1
+        Kd = 0.04998
         
         processed = input
         setpoint = float(math.floor(input))
@@ -176,7 +177,7 @@ class actionNODE:
         # save for next iteration
         self.previous_err = error
         self.integral_err = integral_err
-        
+        print("Desired angle = {}. Actual angle = {}".format(setpoint, processed))  
         return output
                 
     def lane_check(self, msg):
@@ -197,14 +198,14 @@ class actionNODE:
             if DEBUG_ANGLE:
                 print("streer angle: ",msg.steer_angle)
                 
-            processed_steer_angle = self.steering_pid(msg.steer_angle)
-            
+            #processed_steer_angle = self.steering_pid(msg.steer_angle)
+            processed_steer_angle = msg.steer_angle
             if abs(processed_steer_angle) > MAX_STEER:
                 if processed_steer_angle > 0:
                     self.steer_angle = MAX_STEER
                 else:
                     self.steer_angle = -MAX_STEER    
-            else:
+            elif abs(processed_steer_angle - self.steer_angle) > self.offset_steer:
                 self.steer_angle = processed_steer_angle
         
     def pedestrian_check(self, msg):
@@ -340,7 +341,9 @@ class actionNODE:
         #     self.speed_action()
         new_speed = MAX_SPEED - (math.fabs(self.steer_angle) / MAX_STEER * MAX_SPEED)
         self.control.setSpeed(new_speed)
+        print("speed: {}".format(new_speed))
         self.control.setSteer(self.steer_angle)
+        print("angle: {}".format(self.steer_angle))
 
     def wait_action(self):
         global traffic_sign_type
@@ -394,7 +397,7 @@ class actionNODE:
             self.lock_state(RunStates.RUNNING)
             
     def move_to_destination(self, des_x, des_y):
-        MAX_STEER = 23.00
+        MAX_STEER = 30.00
         while abs(des_x - self.cur_x) >= 0.3 and abs(des_y - self.cur_y) >= 0.3:
             diff_x = des_x - self.cur_x
             diff_y = des_y - self.cur_y

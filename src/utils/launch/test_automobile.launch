@@ -1,5 +1,5 @@
 <launch>
-    <node pkg="perception" type="perceptionNODE.py" 	name="perceptionNODE"  		output="screen" />  
+    <node pkg="perception" type="perceptionNODE.py" 	name="perceptionNODE"  		output="screen"/>  
     <node pkg="input"  type="semaphoreNODE.py"  name="semaphoreNODE"    output="screen" cwd="node"/>
     <node pkg="action" type="actionNODE.py" 	name="actionNODE"  		output="screen" cwd="node"/>
     <node pkg="output" type="serialNODE.py" 	name="serialNODE"  		output="screen" cwd="node"/>
