@@ -137,7 +137,12 @@ class actionNODE:
         self.lane_switchable = False
         self.sign_start_time = 0
         self.base_speed = 0.2
+        
+        # steering
         self.steer_angle = 0
+        self.curr_steer_angle = 0
+        self.steer_end = 0
+        
         self.lock = 0
         self.unlock = 1
         self.control = controlNODE()
@@ -166,7 +171,7 @@ class actionNODE:
         
         processed = input
         setpoint = float(math.floor(input))
-        error = setpoint - processed
+        error = math.fabs(setpoint - processed)
         
         integral_err = self.integral_err + error
         derivative_err = error - self.previous_err
@@ -179,6 +184,48 @@ class actionNODE:
         self.integral_err = integral_err
         print("Desired angle = {}. Actual angle = {}".format(setpoint, processed))  
         return output
+    
+    # parking functions
+    def parking_perpendicular(self, slot1, slot2):
+        if slot1 == 1 and slot2 == 0:
+            self.control.setSteer(-23)
+            self.control.moveForward(0.5, 0.1)
+            time.sleep(5)
+            self.control.setSteer(20)
+            self.control.moveForward(0.9, -0.1)
+        elif slot1 == 0 and slot2 == 1:
+            self.control.setSteer(23)
+            self.control.moveForward(1.5, 0.1)
+
+     def parking_parallel(self, slot1, slot2):
+        if slot1 == 1 and slot2 == 0:
+            self.control.setSteer(23)
+            #self.control.moveForward(0.5, 0.3)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(-23)
+            time.sleep(1)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(5)
+            time.sleep(1)
+            self.control.moveForward(0.4, 0.1)
+        elif slot1 == 0 and slot2 == 1:
+            self.control.setSteer(23)
+            #self.control.moveForward(0.5, 0.3)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(-23)
+            time.sleep(1)
+            self.control.setSpeed(-0.1)
+            time.sleep(4)
+            self.control.setSpeed(0)
+            self.control.setSteer(5)
+            time.sleep(1)
+            #self.control.moveForward(0.5, 0.1)
                 
     def lane_check(self, msg):
         global MAX_STEER
@@ -339,11 +386,20 @@ class actionNODE:
         #     self.control.setSpeed(self.base_speed - offset_speed)
         # else:
         #     self.speed_action()
-        new_speed = MAX_SPEED - (math.fabs(self.steer_angle) / MAX_STEER * MAX_SPEED)
+        
+        if self.steer_end == 0:
+            self.steer_end = time.time() + 0.2
+            self.curr_steer_angle = self.steer_angle
+            
+        else if time.time() >= self.steer_end:
+            self.steer_end = 0
+        
+        new_speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * MAX_SPEED)
+        self.control.setSteer(self.curr_steer_angle)
+        print("angle: {}".format(self.curr_steer_angle))
         self.control.setSpeed(new_speed)
         print("speed: {}".format(new_speed))
-        self.control.setSteer(self.steer_angle)
-        print("angle: {}".format(self.steer_angle))
+            
 
     def wait_action(self):
         global traffic_sign_type
@@ -465,4 +521,3 @@ class actionNODE:
 if __name__ == "__main__":
     action_node = actionNODE()
     action_node.run()
-            
