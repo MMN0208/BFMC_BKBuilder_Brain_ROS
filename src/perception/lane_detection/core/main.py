@@ -83,8 +83,8 @@ if __name__ == '__main__':
     # #             ######################### TESTING   #########################
                 while True:
                     output = camera.laneDetector.processor.process(calibrate_img)
-                    # thresh = output['thresh']  # test
-                    thresh = output['birdeye_img']
+                    thresh = output['thresh']  # test
+                    # thresh = output['birdeye_img']
                     cv.imshow('Thresh', thresh)
     #             # # # cv.imshow('points', points_img)
                 
@@ -98,27 +98,28 @@ if __name__ == '__main__':
         except Exception as e:
             print(e)
     
-    frame = cv.imread(IMG_SRC)
-    frame = cv.resize(frame, IMG_SIZE)
-    calibrate_img = camera.undistort(frame)
-    # src, _ = trackers.getSrcView()
+    # frame = cv.imread(IMG_SRC)
+    # frame = cv.resize(frame, IMG_SIZE)
+    # calibrate_img = camera.undistort(frame)
+
+    # # src, _ = trackers.getSrcView()
 
 
-    img_copy = calibrate_img.copy()
-    # lines = src.reshape(-1,1,2)
-    lines = np.array([[320, 633], [1170,  633], [853, 440], [553, 440]], dtype=np.int32).reshape(-1,1,2)
+    # img_copy = calibrate_img.copy()
+    # # lines = src.reshape(-1,1,2)
+    # lines = np.array([[10, 690], [1280,  690], [800, 317], [380, 317]], dtype=np.int32).reshape(-1,1,2)
     
-    while True:
+    # while True:
 
-        # lines,_ = trackers.getSrcView()
-        points = lines.reshape(-1,1,2)
-        solid = cv.polylines(calibrate_img, [points], True, (0,255,0), 2)
-        calibrate_img = img_copy
+    #     # lines,_ = trackers.getSrcView()
+    #     points = lines.reshape(-1,1,2)
+    #     solid = cv.polylines(calibrate_img, [points], True, (0,255,0), 2)
+    #     calibrate_img = img_copy
         
-        calibrate_img = img_copy
-        cv.imshow("img", solid)
-        cv.waitKey(1)
-    cv.destroyAllWindows()
+    #     calibrate_img = img_copy
+    #     cv.imshow("img", solid)
+    #     cv.waitKey(1)
+    # cv.destroyAllWindows()
             
         
 
