@@ -1,0 +1,3 @@
+<launch>  
+    <node pkg="perception" type="saveNODE.py" 	name="saveNODE"  		output="screen" cwd="node"/>
+</launch>

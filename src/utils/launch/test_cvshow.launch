@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="action" type="cvshowNODE.py" 	name="cvshowNODE"  		output="screen" cwd="node"/>
+</launch>
+

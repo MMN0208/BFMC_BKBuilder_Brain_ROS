@@ -66,7 +66,7 @@ class SpeedMod(Enum):
     LOW = 2
     
 # ============================ CAR CONSTRAINTS ===========================================
-MAX_SPEED = 0.4
+MAX_SPEED = 0.2
 MAX_STEER = 30.0
 
 # =============================== CONFIG =================================================
@@ -121,7 +121,7 @@ class actionNODE:
         # STEERING PID 
         self.previous_err = 0
         self.integral_err = 0
-        self.offset_steer = 0.2
+        self.offset_steer = 0.05
         
         #INIT STATE
         # self.sys_state = SystemStates.OFFLINE
@@ -142,7 +142,9 @@ class actionNODE:
         self.steer_angle = 0
         self.curr_steer_angle = 0
         self.steer_end = 0
-        
+        self.see_left_lane = True
+        self.see_right_lane = True
+
         self.lock = 0
         self.unlock = 1
         self.control = controlNODE()
@@ -197,7 +199,7 @@ class actionNODE:
             self.control.setSteer(23)
             self.control.moveForward(1.5, 0.1)
 
-     def parking_parallel(self, slot1, slot2):
+    def parking_parallel(self, slot1, slot2):
         if slot1 == 1 and slot2 == 0:
             self.control.setSteer(23)
             #self.control.moveForward(0.5, 0.3)
@@ -230,6 +232,9 @@ class actionNODE:
     def lane_check(self, msg):
         global MAX_STEER
         
+        print("radius of curvature:", msg.radius_of_curvature)
+        print("steer angle: ", msg.steer_angle)
+        print("angle curvature:", msg.angle_curvature)
         if self.sys_state == SystemStates.ONLINE:
             if self.lane == LanePosition.RIGHT_LANE: #on the right side of the road, check left lane type for lane switching
                 if msg.left_lane_type == 1: #dotted lane
@@ -243,10 +248,13 @@ class actionNODE:
                 else:
                     self.lane_switchable = False
             if DEBUG_ANGLE:
-                print("streer angle: ",msg.steer_angle)
+                pass
+            
+                
                 
             #processed_steer_angle = self.steering_pid(msg.steer_angle)
             processed_steer_angle = msg.steer_angle
+            # processed_steer_angle = msg.angle_curvature
             if abs(processed_steer_angle) > MAX_STEER:
                 if processed_steer_angle > 0:
                     self.steer_angle = MAX_STEER
@@ -379,7 +387,7 @@ class actionNODE:
         global MAX_SPEED
         global MAX_STEER
         # MOD = 10
-        # offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
+        #offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
         # if DEBUG_MOD_SPEED:
         #     print("offset speed: ",offset_speed)
         # if (self.base_speed - offset_speed) > 0:
@@ -387,17 +395,16 @@ class actionNODE:
         # else:
         #     self.speed_action()
         
-        if self.steer_end == 0:
-            self.steer_end = time.time() + 0.2
+        if self.steer_end < time.time():
+            self.steer_end = time.time() + 0.1
             self.curr_steer_angle = self.steer_angle
-            
-        else if time.time() >= self.steer_end:
-            self.steer_end = 0
         
         new_speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * MAX_SPEED)
         self.control.setSteer(self.curr_steer_angle)
+        # self.control.setSteer(0)
         print("angle: {}".format(self.curr_steer_angle))
-        self.control.setSpeed(new_speed)
+        #self.control.setSpeed(new_speed)
+        # self.control.setSpeed(0.2)
         print("speed: {}".format(new_speed))
             
 

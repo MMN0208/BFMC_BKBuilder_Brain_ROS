@@ -92,6 +92,8 @@ class perceptionNODE():
               
         rospy.init_node('perceptionNODE', anonymous=False)
         
+        cv2.namedWindow("Perception", 1)
+        
         # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
         #self.command_publisher = rospy.Publisher("/automobile/perception", String)
         self.bridge = CvBridge()
@@ -125,14 +127,16 @@ class perceptionNODE():
         """
         
         rospy.loginfo("starting perceptionNODE")
+        count = 1
         #rospy.spin() 
         while not rospy.is_shutdown():
             try:
                 if self._image is not None:
                     #self.send_BEV()
-                    self.send_perceptionInfo(self._image)
-
-    #                self.send_laneInfo(self._image)
+                    cv2.imshow("Perception", self._image)
+                    self.send_perceptionInfo(self._image, count)
+                    count += 1
+        #                self.send_laneInfo(self._image)
             except Exception as e:
                 print(e)
 
@@ -177,7 +181,7 @@ class perceptionNODE():
         """
         self._image = self.bridge.imgmsg_to_cv2(msg)
 
-    def send_perceptionInfo(self, scene):
+    def send_perceptionInfo(self, scene, count):
         
         """
         Send message via topic "automobile/lane"
@@ -194,21 +198,27 @@ class perceptionNODE():
         lane_detection_result = self.camera._runDetectLane(calibrate_scence)
         bev_img = lane_detection_result['BEV']
         thresh_show = lane_detection_result['thresh']
-        #cv2.imshow("Thresh", thresh)
+        # cv2.imshow("Perception", thresh)
+        # cv.waitKey(3)
         msg = perception()
         if lane_detection_result is not None:
-            msg.steer_angle             = lane_detection_result['steer_angle']
+            # msg.steer_angle             = lane_detection_result['steer_angle']
             msg.radius_of_curvature     = lane_detection_result['radius'] 
             msg.left_lane_type          = lane_detection_result['left_lane_type'] 
             msg.left_lane_type          = lane_detection_result['right_lane_type']
         else:
             
-            msg.steer_angle             = 0
+            # msg.steer_angle             = 0
             msg.radius_of_curvature     = -1
             msg.left_lane_type          = 0
             msg.left_lane_type          = 0
+
+        # cv2.imwrite(IMG_DIR + '/' + 'ckpt_' + str(count) + '.png', thresh)        
+        msg.steer_angle = lane_detection_result['steer_angle']
+        msg.angle_curvature = lane_detection_result['angle_curvature']
         self.lane_publisher.publish(msg)
         self.send_BEV(bev_img)
+    
 
     def send_laneInfo(self, scene):
         """
@@ -251,23 +261,6 @@ class perceptionNODE():
         send_image_thresh = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
         self.bev_thresh_publisher.publish(send_image_thresh)
     # ===================================== READ ==========================================
-    def _read(self):
-        """ It's represent the reading activity on the the serial.
-        """
-        while not rospy.is_shutdown():
-            try:
-                print("hello from perception")
-                time.sleep(2)
-                 
-            except UnicodeDecodeError:
-                pass     
-    # ===================================== WRITE ==========================================
-    def _write(self, msg):
-        """ Represents the writing activity on the the serial.
-        """
-        command = json.loads(msg.data)
-        #command = msg.data
-        print(command)
 
     
 if __name__ == "__main__":

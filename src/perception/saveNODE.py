@@ -52,17 +52,18 @@ class saveNODE():
         self.bridge = CvBridge()
 
         self.object_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self._object)
-        self.depth_subscriber = rospy.Subscriber("/camera/aligned_to_depth/image_raw", Image, self._depth)
+        self.depth_subscriber = rospy.Subscriber("/camera/aligned_depth_to_color/image_raw", Image, self._depth)
 
         self.i = 0
         self.j = 0
-    def run(self):
+    def run(self): 
         """Apply the initializing methods and start the threads
         """
         rospy.loginfo("starting saveNODE")
         rospy.spin()  
     
     def _depth(self, msg):
+        print("come here")
         image = self.bridge.imgmsg_to_cv2(msg)
         filename = f"depth:{self.i}.png"
         print(f"SAVING:" + filename)
@@ -74,7 +75,7 @@ class saveNODE():
         image = self.bridge.imgmsg_to_cv2(msg)
         filename = f"image:{self.j}.png"
         print(f"SAVING:" + filename)
-        self.i = self.i+1
+        self.j = self.j+1
         cv2.imwrite(filename, image)
 
 if __name__ == "__main__":
