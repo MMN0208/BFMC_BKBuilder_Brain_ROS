@@ -107,18 +107,18 @@ if __name__ == '__main__':
 
     # img_copy = calibrate_img.copy()
     # # lines = src.reshape(-1,1,2)
-    # lines = np.array([[10, 690], [1280,  690], [800, 317], [380, 317]], dtype=np.int32).reshape(-1,1,2)
+    # lines = np.array([[0, 315], [535,  318], [368, 165], [175, 165]], dtype=np.int32).reshape(-1,1,2)
     
     # while True:
 
-    #     # lines,_ = trackers.getSrcView()
+    # #     lines,_ = trackers.getSrcView()
     #     points = lines.reshape(-1,1,2)
     #     solid = cv.polylines(calibrate_img, [points], True, (0,255,0), 2)
     #     calibrate_img = img_copy
         
     #     calibrate_img = img_copy
     #     cv.imshow("img", solid)
-    #     cv.waitKey(1)
+        # cv.waitKey(1)
     # cv.destroyAllWindows()
             
         

@@ -25,6 +25,8 @@ TESTNODES['WBR'] = 600                          #   width bottom right
 TESTNODES['HBR'] = 50                            #   height bottom right
 #####################   END TEST CONFIG  ########################
 
+WIDTH = 640
+HEIGHT = 480
 ##################  HELPER FUNCTIONS    ###########################
 def extract_frames(video_path, NUM_FRAMES, OFFSET):
 
@@ -119,7 +121,7 @@ class Trackbars:
         self.initSrcView()
         self.initDstView()
 
-    def initSrcView(self, width = 1280, height = 720):
+    def initSrcView(self, width = WIDTH, height = HEIGHT):
         cv.namedWindow('SrcView')
         cv.resizeWindow("SrcView", 360, 240)
         
@@ -133,7 +135,7 @@ class Trackbars:
         cv.createTrackbar('HBR', 'SrcView', 318, height , self.doNothing)			#	height bottom right
         
          
-    def initDstView(self, width = 640, height = 360):
+    def initDstView(self, width = WIDTH, height = HEIGHT):
         H = height
         W = width 
         cv.namedWindow('DstView')
@@ -188,7 +190,7 @@ class Trackbars:
         hTop = cv.getTrackbarPos("HeightSrcTop", "Src")
         return [(wBot, hBot), (wTop, hTop)]
 
-    def initPointTrackings(self, initVals, width = 1280, height = 720):
+    def initPointTrackings(self, initVals, width = WIDTH, height = HEIGHT):
         """
         :params: initVals = (Width Top, Height Top, Width Bottom, Height Bottom)
         """
@@ -200,7 +202,7 @@ class Trackbars:
         cv.createTrackbar("Height Bottom", "ViewPerspective", initVals[3], height, self.doNothing)
     
     
-    def getValPoints(self, width = 1280, height = 720):
+    def getValPoints(self, width = WIDTH, height = HEIGHT):
         wTop = cv.getTrackbarPos("Width Top", "ViewPerspective")
         hTop = cv.getTrackbarPos("Height Top", "ViewPerspective")
         wBot = cv.getTrackbarPos("Width Bottom", "ViewPerspective")
