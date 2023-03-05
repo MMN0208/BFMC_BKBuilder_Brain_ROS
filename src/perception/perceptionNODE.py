@@ -43,9 +43,12 @@ from utils.msg      import perception, lane
 import numpy as np
 import cv2
 from lane_detection.core.camera import Camera
+from lane_detection.core.utils import Trackbars
+
 from object_detection.network.edgetpumodel import EdgeTPUModel
 from object_detection.network.utils import plot_one_box, Colors, get_image_tensor
 
+# tracker = Trackbars()
 #import lane detection
 class perceptionNODE():
     def __init__(self):
@@ -93,7 +96,7 @@ class perceptionNODE():
         rospy.init_node('perceptionNODE', anonymous=False)
         
         cv2.namedWindow("Perception", 1)
-        
+        cv2.namedWindow("BEV", 1)
         # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
         #self.command_publisher = rospy.Publisher("/automobile/perception", String)
         self.bridge = CvBridge()
@@ -107,7 +110,8 @@ class perceptionNODE():
         self.lane_info_publisher = rospy.Publisher("/automobile/lane_info",lane, queue_size = 1)
         
         self.lane_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self._lane)
-        
+        self.tuning = False                     # Tune the bird eye view and other params 
+        self.tune_BEV = False
         #======OBJECT DETECTION======
         # self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
         # self.model_path = "object_detection/weights/traffic.tflite"
@@ -132,11 +136,28 @@ class perceptionNODE():
         while not rospy.is_shutdown():
             try:
                 if self._image is not None:
-                    #self.send_BEV()
-                    cv2.imshow("Perception", self._image)
-                    self.send_perceptionInfo(self._image, count)
-                    count += 1
-        #                self.send_laneInfo(self._image)
+                    
+                    if not self.tuning:
+                        #self.send_BEV()
+                        # cv2.imshow("Perception", self._image)
+                        self.send_perceptionInfo(self._image, count)
+                        count += 1
+            #                self.send_laneInfo(self._image)
+                    else:
+                        
+                        calibrate_img = self.camera.undistort(self._image)
+                        if self.tune_BEV:        
+                            process_results = self.camera.laneDetector.processor.process(calibrate_img)
+
+                            BEV = process_results['birdeye_img']
+                            # cv2.imshow("BEV", BEV)
+                            # cv2.waitKey(3)
+                        else:
+                            lines, _ = trackers.getSrcView()
+                            lines = lines.reshape(-1, 1, 2)
+                            # image = cv2.polylines(image, [lines], True, (0,255,0), 2)
+                            # cv2.imshow("BEV", image)
+                            # cv2.waitKey(3)
             except Exception as e:
                 print(e)
 
@@ -206,9 +227,11 @@ class perceptionNODE():
             msg.radius_of_curvature     = lane_detection_result['radius'] 
             msg.left_lane_type          = lane_detection_result['left_lane_type'] 
             msg.left_lane_type          = lane_detection_result['right_lane_type']
+            msg.one_lane                =  lane_detection_result['one_lane']
         else:
             
             # msg.steer_angle             = 0
+            msg.one_lane                = 3
             msg.radius_of_curvature     = -1
             msg.left_lane_type          = 0
             msg.left_lane_type          = 0
@@ -262,7 +285,7 @@ class perceptionNODE():
         self.bev_thresh_publisher.publish(send_image_thresh)
     # ===================================== READ ==========================================
 
-    
+
 if __name__ == "__main__":
     perNod = perceptionNODE()
     perNod.run()

@@ -56,6 +56,7 @@ class saveNODE():
 
         self.i = 0
         self.j = 0
+
     def run(self): 
         """Apply the initializing methods and start the threads
         """
@@ -65,7 +66,7 @@ class saveNODE():
     def _depth(self, msg):
         print("come here")
         image = self.bridge.imgmsg_to_cv2(msg)
-        filename = f"depth:{self.i}.png"
+        filename = f"depth_cn:{self.i}.png"
         print(f"SAVING:" + filename)
         self.i = self.i+1
         cv2.imwrite(filename, image)
@@ -73,7 +74,7 @@ class saveNODE():
     
     def _object(self, msg):
         image = self.bridge.imgmsg_to_cv2(msg)
-        filename = f"image:{self.j}.png"
+        filename = f"image_cn:{self.j}.png"
         print(f"SAVING:" + filename)
         self.j = self.j+1
         cv2.imwrite(filename, image)

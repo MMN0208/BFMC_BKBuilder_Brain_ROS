@@ -94,7 +94,10 @@ class objectNODE():
     # ===================================== DEPTH ==========================================
     def _depth(self, msg):
         self.depth = self.bridge.imgmsg_to_cv2(msg)
-        print(f"DEPTH:{self.depth.shape}")
+        #self.depth = cv2.applyColorMap(self.depth, cv2.COLORMAP_JET)
+
+        #print(f"DEPTH:{self.depth.shape}")
+        #print(f"DEPTH ANALYSIS:{np.min(self.depth)}:{np.max(self.depth)}")
     # ===================================== RUN ==========================================
     def run(self):
         """Apply the initializing methods and start the threads
@@ -153,17 +156,21 @@ class objectNODE():
                 
                 #print(f"Depth:{d.shape}")
                 d_ = self.depth[int(xyxy[1]):int(xyxy[3]), int(xyxy[0]):int(xyxy[2])]
-                d_ = crop_center(d_, 2, 2)
-                if(np.median(d_) > 0 and np.median(d_) <= 600):
+                d_c = crop_center(d_, 4, 4)
+                if(np.median(d_c) > 0 and np.median(d_c) <= 1000):
                     traffic = traffic_sign()
                     traffic.traffic_sign_type = c
                     self.traffic_light_publisher.publish(traffic)
                 #print(f"size d_:{d_.shape}")
-                print(f"Depth of {self.model.names[c]}:{d_}")
+                print(f"Depth of {self.model.names[c]}:{d_c}")
                 print(f"size bbox={int(xyxy[0])}:{int(xyxy[1])}:{int(xyxy[2])}:{int(xyxy[3])}")
                 
                 label = f"Class:{self.model.names[c]}:{xyxy}"  
-                output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True))        
+                output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True))
+                #visualize = cv2.hconcat([output_image[int(xyxy[1]):int(xyxy[3]), int(xyxy[0]):int(xyxy[2])], d_])
+                d_ = cv2.applyColorMap(d_.astype(np.uint8), cv2.COLORMAP_JET)
+                cv2.imshow('Object', output_image[int(xyxy[1]):int(xyxy[3]), int(xyxy[0]):int(xyxy[2])])       
+                cv2.imshow('Depth', d_)
         #PROCESS
         #self.depth_debug_publisher.publish(self.bridge.cv2_to_imgmsg(heatmap, "rgb8"))
         
@@ -172,11 +179,16 @@ class objectNODE():
         out = pedestrian()
         out.image = imageObject
         out.valid, out.is_pedestrian_infront, out.x, out.y, out.h, out.w = 0,0,0,0,0,0
-        
-        self.debug_publisher.publish(out.image)
-        self.pedestrian_publisher.publish(out)  
+
+
+        cv2.imshow('Random', output_image) 
+        cv2.waitKey(3)
+
+
+        #self.debug_publisher.publish(out.image)
+        #self.pedestrian_publisher.publish(out)  
         tinference, tnms = self.model.get_last_inference_time()
-        #print("Frame done in {}".format(tinference+tnms))
+        print("Frame done in {}".format(tinference+tnms))
 
 
 if __name__ == "__main__":

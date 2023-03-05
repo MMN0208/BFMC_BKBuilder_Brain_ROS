@@ -81,6 +81,10 @@ class Camera():
         self.xm_per_pix = 0.03
         self.max_steer = 30
         self.min_steer = -30
+
+        #   Left-right lane check
+        self.visible_range_points = 200
+
     def calibrate_camera(self, imgList, nx = 9, ny = 6):
         if self.mtx == None:
             objp = np.zeros((ny*nx, 3), np.float32)
@@ -288,9 +292,13 @@ class Camera():
         #   Right lane
 
         print("Left line all x = \nRight line all x = {}".format(len(left_line_allx), len(right_line_allx))) 
+        
+
         results['out_img'] = out_img
         results['left_lane_inds'] = left_lane_inds
         results['right_lane_inds'] = right_lane_inds
+        results['left_line_allx'] = left_line_allx
+        results['right_line_allx'] = right_line_allx
         results['left_lane_type'] = 1
         results['right_lane_type'] = 0
         results['radius'] = (left_lane_radius + right_lane_radius) / 2
@@ -407,17 +415,25 @@ class Camera():
     def angleCalculator(self, img_angle):
 
         angleDegree = 0
-        offset_x = 72
-        offset_y = 144
+        offset_x =  320
+        offset_y =  480
+        ratio_x = 640 / 144
+        ratio_y = 480 / 144
+
         img_angle = cv.resize(img_angle, (144, 144))
+        
         center_x, center_y = self.computeCenter(img_angle)
+        center_x = center_x * ratio_x
+        center_y = center_y * ratio_y 
+        
         centers = dict()
         slope = 0
-        print("Center y: {}".format(center_y))
+        
         if center_x != 0 or center_y != 0:
             slope = (center_x - offset_x) / float (center_y - offset_y) # (72, 144) is center of (144, 144) image
             angleRadian = np.arctan(slope)
             angleDegree = float(angleRadian * 180.0 / math.pi)
+
         centers['x'] = center_x
         centers['y'] = center_y
         centers['slope'] = slope
@@ -487,6 +503,21 @@ class Camera():
         ####    Slide window search
         find_lane_result = self.find_lanes(thresh)
         find_lane_result['steer_angle'] = random.randint(-1, 1)
+        
+        ##  Check left lane and right lane
+        left_line_allx = find_lane_result['left_line_allx']
+        right_line_allx = find_lane_result['right_line_allx']
+        find_lane_result['one_lane'] = 3
+        
+        if len(left_line_allx) >= self.visible_range_points and len(right_line_allx) >= self.visible_range_points:        #     Two lanes are detected
+            find_lane_result['one_lane'] = 0
+        
+        if len(left_line_allx) >= self.visible_range_points and len(right_line_allx) < self.visible_range_points:          #    Just left lane
+            find_lane_result['one_lane'] = 1
+
+        if len(left_line_allx) <self.visible_range_points and len(right_line_allx) >= self.visible_range_points:          #    Just right lane
+            find_lane_result['one_lane'] = 2 
+
         output_img = find_lane_result['out_img']
 
         find_lane_result['thresh'] = thresh
@@ -504,12 +535,22 @@ class Camera():
 
         center_x = centers['x']
         center_y = centers['y']
+
+        center_x = int(center_x)
+        center_y = int(center_y)
+
+        string = "Left line all x = {}\nRight line all x = {}".format(len(left_line_allx), len(right_line_allx))
         print("Center x = {}\nCenter y = {}".format(center_x, center_y))
-        thresh = cv.circle(thresh, (int(center_x), int(center_y)),  100, (255, 0, 0), thickness = 10)
+
+        start_point = (400, 480)
+        end_point = (center_x, center_y)
+
+        # thresh = cv.putText(thresh, string, (160, 160), cv.FONT_HERSHEY_PLAIN, 60, (0,255,0), 10, cv.LINE_AA)
+        thresh = cv.line(thresh, start_point, end_point, color = (255, 255,0), thickness = 50)  
             # steer_angle = 0.5 * steer_angle + 0.5 * steer_angle_curvature
-        cv.imshow("Thresh", thresh)
-        cv.imshow("Human", warped)
-        cv.waitKey(3)
+        # cv.imshow("Thresh", thresh)
+        # cv.imshow("Human", warped)
+        # cv.waitKey(3)
         find_lane_result['angle_curvature'] = int(math.ceil(steer_angle_curvature))
         ################## Visualization #################
         if DEBUG_VISUAL:
