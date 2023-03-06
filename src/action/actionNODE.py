@@ -573,7 +573,18 @@ class actionNODE:
                 self.auto_control()
             
             rospy.sleep(0.1)
+            
+def main():
+    action_node = actionNODE()
+    rospy.loginfo("START actionNODE")
+    try:
+        action_node.run()
+    except:
+        print("Your code is bugged lil bro")
+        action_node.control.brake(0)
+    finally:
+        action_node.control.brake(0)
+        rospy.loginfo("STOP actionNODE")
                 
 if __name__ == "__main__":
-    action_node = actionNODE()
-    action_node.run()
+    main()
