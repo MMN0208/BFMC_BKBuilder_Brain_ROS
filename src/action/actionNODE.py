@@ -294,7 +294,7 @@ class actionNODE:
             elif msg.one_lane == LaneVisibility.RIGHT.value: # turn left
                 if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
                     
-                    # self.curr_steer_angle = -TURN_ANGLE
+                    # self.desired_steer_angle = -TURN_ANGLE
                     
                     self.desired_steer_angle = self.curr_steer_angle # keep current steer angle
                     self.run_state = RunStates.HARD_TURN
