@@ -251,21 +251,76 @@ class Camera():
         radius_of_curvature = (self.left_lane.radius_of_curvature + self.right_lane.radius_of_curvature)/2.0
         return radius_of_curvature
     
-    def write_stats(self, img):
-        
-        font = cv.FONT_HERSHEY_PLAIN
-        size = 3
-        weight = 2
-        color = (255,255,255)
-        
-        radius_of_curvature = self.get_radiusCurvature()    
-        cv.putText(img,'Lane Curvature Radius: '+ '{0:.2f}'.format(radius_of_curvature)+'m',(30,60), font, size, color, weight)
-
-        if (self.left_lane.line_base_pos >=0):
-            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(self.right_lane.line_base_pos*100)+'cm'+ ' Right of Center',(30,100), font, size, color, weight)
-        else:
-            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(abs(self.left_lane.line_base_pos)*100)+'cm' + ' Left of Center',(30,100), font, size, color, weight)
     
+    
+    def angleCalculator(self, img_angle):
+
+        angleDegree = 0
+        img_angle = cv.resize(img_angle, (144, 144))
+        center_x, center_y = self.computeCenter(img_angle)
+
+        if center_x != 0 or center_y != 0:
+            slope = (center_x - 72) / float (center_y - 144) # (72, 144) is center of (144, 144) image
+            angleRadian = float(math.atan(slope))
+            angleDegree = float(angleRadian * 180.0 / math.pi)
+
+        return angleDegree
+    
+    def computeCenter(self, roadImg):
+
+        roadImg = roadImg.astype(np.int32)
+        roadImg = roadImg * 255 
+        count = 0
+        center_x = 0
+        center_y = 0
+        for i in range(0, 144):
+            for j in range(0, 144):
+                if roadImg[i][j] >= 200:
+                    count += 1
+                    center_x += j
+                    center_y += i
+    
+
+        if (center_x != 0 or center_y != 0) and count != 0:
+            center_x = center_x / count
+            center_y = center_y / count
+
+        return center_x, center_y
+
+    def _runDetectLane(self, img):
+
+        preprocess_results= self.laneDetector.processor.process(img)
+        warped = preprocess_results['birdeye_img']
+        thresh = preprocess_results['thresh']
+        inverse_transform = preprocess_results['inverse_transform']
+
+        find_lane_result = self.find_lanes(thresh)
+        output_img = find_lane_result['out_img']
+
+        
+        find_lane_result['thresh'] = thresh
+        find_lane_result['steer_angle'] = random.randint(-1, 1)
+
+        if find_lane_result['angle_change']:
+            steer_angle = self.angleCalculator(thresh)
+            find_lane_result['steer_angle'] = steer_angle
+        
+        ################## Visualization #################
+        # lane_img = self.draw_lane(img, thresh, inverse_transform)
+        # finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
+        ##################################################
+
+        """Testing"""
+
+        test_results = dict()
+        test_results['out_img'] = output_img
+        # test_results['lane_img'] = lane_img
+        # test_results['finalImg'] = finalImg
+
+        if DEBUG_VISUAL:
+            return test_results, preprocess_results, find_lane_result       # Test results
+        return find_lane_result
+        
 
     def draw_lane(self, undist, img, Minv):
         # Generate x and y values for plotting
@@ -333,73 +388,19 @@ class Camera():
         cv.putText(out_img, "Detected Lanes", (int(1494-boxsize[0]/2),521), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
         
         return out_img 
-    
-    def angleCalculator(self, img_angle):
-
-        angleDegree = 0
-        img_angle = cv.resize(img_angle, (144, 144))
-        center_x, center_y = self.computeCenter(img_angle)
-
-        if center_x != 0 or center_y != 0:
-            slope = (center_x - 72) / float (center_y - 144) # (72, 144) is center of (144, 144) image
-            angleRadian = float(math.atan(slope))
-            angleDegree = float(angleRadian * 180.0 / math.pi)
-
-        return angleDegree
-    
-    def computeCenter(self, roadImg):
-
-        roadImg = roadImg.astype(np.int32)
-        roadImg = roadImg * 255 
-        count = 0
-        center_x = 0
-        center_y = 0
-        for i in range(0, 144):
-            for j in range(0, 144):
-                if roadImg[i][j] >= 200:
-                    count += 1
-                    center_x += j
-                    center_y += i
-    
-
-        if (center_x != 0 or center_y != 0) and count != 0:
-            center_x = center_x / count
-            center_y = center_y / count
-
-        return center_x, center_y
-
-
-    def _runDetectLane(self, img):
-
-        preprocess_results= self.laneDetector.processor.process(img)
-        warped = preprocess_results['birdeye_img']
-        thresh = preprocess_results['thresh']
-        inverse_transform = preprocess_results['inverse_transform']
-
-        find_lane_result = self.find_lanes(thresh)
-        output_img = find_lane_result['out_img']
-
+ 
+    def write_stats(self, img):
         
-        find_lane_result['thresh'] = thresh
-        find_lane_result['steer_angle'] = random.randint(-1, 1)
-
-        if find_lane_result['angle_change']:
-            steer_angle = self.angleCalculator(thresh)
-            find_lane_result['steer_angle'] = steer_angle
+        font = cv.FONT_HERSHEY_PLAIN
+        size = 3
+        weight = 2
+        color = (255,255,255)
         
-        ################## Visualization #################
-        # lane_img = self.draw_lane(img, thresh, inverse_transform)
-        # finalImg = self.generate_output(warped=warped, threshold_img=thresh, polynomial_img=output_img, lane_img=lane_img)
-        ##################################################
+        radius_of_curvature = self.get_radiusCurvature()    
+        cv.putText(img,'Lane Curvature Radius: '+ '{0:.2f}'.format(radius_of_curvature)+'m',(30,60), font, size, color, weight)
 
-        """Testing"""
-
-        test_results = dict()
-        test_results['out_img'] = output_img
-        # test_results['lane_img'] = lane_img
-        # test_results['finalImg'] = finalImg
-
-        if DEBUG_VISUAL:
-            return test_results, preprocess_results, find_lane_result       # Test results
-        return find_lane_result
-        
+        if (self.left_lane.line_base_pos >=0):
+            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(self.right_lane.line_base_pos*100)+'cm'+ ' Right of Center',(30,100), font, size, color, weight)
+        else:
+            cv.putText(img,'Vehicle is '+ '{0:.2f}'.format(abs(self.left_lane.line_base_pos)*100)+'cm' + ' Left of Center',(30,100), font, size, color, weight)
+    

@@ -1,3 +1,5 @@
+# from numba imprt njit
+import time
 import cv2 as cv
 import numpy as np
 import pickle
@@ -245,8 +247,62 @@ class Trackbars:
     def doNothing(self):
         pass
 
+def measure_time(func):
+
+    def wrapper(*args, **kwargs):
+        start = time.time() 
+        func(*args) 
+        end = time.time()
+
+        print("Time elapsed in {} = {}" .format(func.__name__,  end - start))
+        
+    return wrapper
+        
+@measure_time
+def brute_force(mat):
+    
+    H, W = mat.shape
+    center_x = 0
+    center_y = 0
+    count = 0
+    for i in range(H):
+        for j in range(W):
+
+            if mat[i][j] >= 240:
+                center_x += j
+                center_y += i
+                count += 1
+
+    center_x = center_x / count
+    center_y = center_y / count
+    print("Center x = {} -- Center y = {}" .format(center_x, center_y, __name__))
+# @measure_time
+# def flatten(mat):
+#     H , W = mat.shape
+#     return np.reshape(mat, (H*W, 1))
+
+@measure_time
+def better_way(mat):
+    indices = np.argwhere(mat >= 240)
+    sum = indices.sum(axis = 0)
+    print(sum)
+    print(indices.shape[0])
+    center_x = sum[1] / indices.shape[0]
+    center_y = sum[0] / indices.shape[0]
+    print("Center x = {} -- Center y = {}. " .format(center_x, center_y, __name__))
+
 if __name__ == '__main__':
         
-	image = cv.imread("src/perception/lane_detection/core/savebev.jpeg")
-	pts = np.array([[50, 110], [550, 110], [550, 300], [50, 300]])
-	ptss = four_point_transform(image, pts)
+    import numpy as np
+
+    for i in range(20):
+        print("Run in the {}th iteration".format(i+1))
+        mat = np.random.randint(0, 255, (480, 640))
+
+        brute_force(mat)
+        better_way(mat)
+    # start = time.time()
+    # indices = np.argwhere(mat >= 240)
+    # end = time.time()
+    # print(end - start)
+    # print(indices.sum(axis = 0) / indices.shape[0])

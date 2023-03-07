@@ -1,8 +1,77 @@
 import cv2 as cv
 import numpy as np
-import matplotlib.pyplot as plt
-from const import *
-from utils import Trackbars
+
+IMG_SIZE = (1280, 720)
+W, H = IMG_SIZE
+wTop =  957
+hTop =  0
+wBot =  262 
+hBot =  720
+
+params_processing = dict()
+params_processing['dst_points'] = np.array([[wBot, hBot], [W - wBot, hBot], [wTop, hTop], [W - wTop, hTop]], dtype = np.float32)
+params_processing['src_points'] = np.array([[10, 690], [1280, 690], [800   , 317], [380, 317]], dtype=np.float32)
+params_processing['gaussian_kernel_size'] = 5
+params_processing['sobel_kernel_size'] = 3
+params_processing['lower_white'] = np.array([0, 150, 10])
+params_processing['upper_white'] = np.array([250, 250, 255])
+# class ImageProcessing:
+#     def __init__(self):
+
+#         self.white_low = np.array([0, 0, 180], dtype=np.uint8)
+#         self.white_high = np.array([150, 6, 255], dtype=np.uint8)
+
+#         self.verticalStructure1 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 3))
+#         self.verticalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (1, 3))
+#         self.horizontalStructure = cv2.getStructuringElement(cv2.MORPH_RECT, (7, 1))
+#         self.horizontalStructure2 = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 1))
+
+#         # NOTE BEV param
+#         self.cutoff = 60
+#         pts1 = np.float32([[151, 120 - self.cutoff], [322, 120 - self.cutoff],
+#                         [0, 300 - self.cutoff], [480, 300 - self.cutoff]])
+#         pts2 = np.float32([[98, 120 - self.cutoff], [258, 120 - self.cutoff],
+#                         [98, 360 - self.cutoff], [258, 360 - self.cutoff]])
+#         self.M = cv2.getPerspectiveTransform(pts1, pts2)
+
+
+#     def colorFilterLine(self, img):
+#         h, w= img.shape[0], img.shape[1]
+#         white_mask = np.zeros(((h,w)), np.uint8)
+
+#         hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+#         white_mask= cv2.inRange(hsv, self.white_low, self.white_high)
+
+#         ver_img = cv2.dilate(white_mask, self.verticalStructure1)
+#         hor_img = cv2.dilate(ver_img,self.horizontalStructure2)
+
+#         black_screen = np.zeros((h,w), np.uint8)
+#         contours, hie = cv2.findContours(hor_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+#         for cnt in contours:
+#             area = cv2.contourArea(cnt)
+#             if area >= 900:
+#                 cv2.drawContours(black_screen, [cnt], -1, 255, -1)
+
+#         return black_screen
+    
+#     def region_of_interest(self, frame):
+#         roi = np.array([[(10, 690), (1280, 690), (800, 317), (380, 317)]], dtype = np.int32)
+#         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+#         # Apply Gaussian blur to reduce noise
+#         blur = cv2.GaussianBlur(gray, (5, 5), 0)
+
+#         # Apply Canny edge detection to detect edges
+#         edges = cv2.Canny(blur, 50, 150)
+
+#         # Apply region of interest mask to extract the lane markings
+#         masked_edges = np.zeros_like(edges) 
+#         cv2.fillPoly(masked_edges, roi, 255)
+#         masked_edges = cv2.bitwise_and(edges, masked_edges)
+
+#         return masked_edges
+
+
 class Preprocessor:
 
     """ This class is used to preprocessing the scene which is input steamed from camera.
@@ -65,7 +134,7 @@ class Preprocessor:
         self.sobel_kernel_size = params_processing['sobel_kernel_size'] 
         self.lower_white = params_processing['lower_white']
         self.upper_white = params_processing['upper_white']
-        self.tracker = Trackbars()
+        #self.tracker = Trackbars()
         print("Init processing images")
         
 
@@ -75,10 +144,10 @@ class Preprocessor:
     
     
     def gaussian_blur(self, img):
-        return cv.GaussianBlur(img, (3, 3), 0)
+        return cv.GaussianBlur(img, (3,3), 0)
 
     def threshold(self, img):
-        _, img = cv.threshold(img, 130, 255, cv.THRESH_BINARY) 
+        _, img = cv.threshold(img, 200, 250, cv.THRESH_BINARY) 
         return img
 
     def hls_threshold(self, img, lower = 200, upper = 255):
@@ -100,8 +169,8 @@ class Preprocessor:
         H, W, C = img.shape
 
         src = params_processing['src_points']
-        dst = self.tracker.getValPoints()
-        # dst = params_processing['dst_points']
+        # src = self.tracker.getValPoints()
+        dst = params_processing['dst_points']
         transform_view = cv.getPerspectiveTransform(src, dst)
         inverse_transform_view = cv.getPerspectiveTransform(dst, src)
         
