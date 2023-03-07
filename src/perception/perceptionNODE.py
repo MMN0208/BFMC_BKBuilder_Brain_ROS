@@ -43,9 +43,12 @@ from utils.msg      import perception, lane
 import numpy as np
 import cv2
 from lane_detection.core.camera import Camera
+from lane_detection.core.utils import Trackbars
+
 from object_detection.network.edgetpumodel import EdgeTPUModel
 from object_detection.network.utils import plot_one_box, Colors, get_image_tensor
 
+# tracker = Trackbars()
 #import lane detection
 class perceptionNODE():
     def __init__(self):
@@ -92,6 +95,8 @@ class perceptionNODE():
               
         rospy.init_node('perceptionNODE', anonymous=False)
         
+        cv2.namedWindow("Perception", 1)
+        cv2.namedWindow("BEV", 1)
         # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
         #self.command_publisher = rospy.Publisher("/automobile/perception", String)
         self.bridge = CvBridge()
@@ -105,19 +110,20 @@ class perceptionNODE():
         self.lane_info_publisher = rospy.Publisher("/automobile/lane_info",lane, queue_size = 1)
         
         self.lane_subscriber = rospy.Subscriber("/camera/color/image_raw", Image, self._lane)
-        
+        self.tuning = False                     # Tune the bird eye view and other params 
+        self.tune_BEV = False
         #======OBJECT DETECTION======
-        self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
-        self.model_path = "object_detection/weights/traffic.tflite"
-        self.names = "object_detection/data.yaml"
-        self.conf_thresh = 0.5
-        self.iou_thresh = 0.65
-        self.device = 0
-        self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
-        #self.model = None 
+        # self.object_subscriber = rospy.Subscriber("/automobile/image_raw", Image, self._object)
+        # self.model_path = "object_detection/weights/traffic.tflite"
+        # self.names = "object_detection/data.yaml"
+        # self.conf_thresh = 0.5
+        # self.iou_thresh = 0.65
+        # self.device = 0
+        # self.model = EdgeTPUModel(self.model_path, self.names, conf_thresh=self.conf_thresh, iou_thresh=self.iou_thresh)
+        # #self.model = None 
         
-        self.colors = Colors()
-        #.
+        # self.colors = Colors()
+        # #.
         
     # ===================================== RUN ==========================================
     def run(self):
@@ -125,48 +131,69 @@ class perceptionNODE():
         """
         
         rospy.loginfo("starting perceptionNODE")
+        count = 1
         #rospy.spin() 
         while not rospy.is_shutdown():
             try:
                 if self._image is not None:
-                    #self.send_BEV()
-                    self.send_perceptionInfo(self._image)
-                    self.send_laneInfo(self._image)
-                    print('hello world')
+                    
+                    if not self.tuning:
+                        #self.send_BEV()
+                        # cv2.imshow("Perception", self._image)
+                        self.send_perceptionInfo(self._image, count)
+                        count += 1
+            #                self.send_laneInfo(self._image)
+                    else:
+                        
+                        calibrate_img = self.camera.undistort(self._image)
+                        if self.tune_BEV:        
+                            process_results = self.camera.laneDetector.processor.process(calibrate_img)
+
+                            BEV = process_results['birdeye_img']
+                            # cv2.imshow("BEV", BEV)
+                            # cv2.waitKey(3)
+                        else:
+                            lines, _ = trackers.getSrcView()
+                            lines = lines.reshape(-1, 1, 2)
+                            # image = cv2.polylines(image, [lines], True, (0,255,0), 2)
+                            # cv2.imshow("BEV", image)
+                            # cv2.waitKey(3)
             except Exception as e:
                 print(e)
-        #self._read() 
+
+
+            #time.sleep(0.1)        #self._read() 
         rospy.spin()   
     
     # ===================================== OBJECT DETECT ========================================
-    def _object(self, msg):
-        """Object detection callback
-        """
-        image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
-        #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        output_image = image
-        full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
-        pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
-        #print(f"DetectionProcess{net_image.shape}")
-        det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
+    # def _object(self, msg):
+    #     """Object detection callback
+    #     """
+    #     image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
+    #     #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    #     output_image = image
+    #     full_image, net_image, pad = get_image_tensor(image, 640) #Transform the image into tensors
+    #     pred = self.model.forward(net_image) #Pass the tensor to the model to get a prediction
+    #     #print(f"DetectionProcess{net_image.shape}")
+    #     det = self.model.process_predictions(pred[0], full_image, pad) #Post process prediction
                 
                 
-        for *xyxy, conf, cls in reversed(det): #Process prediction loop
-            '''
-            xyxy (List): bounding box
-            conf (int): prediction percentage
-            cls (int): class index of prediction
-            '''
-            c = int(cls)  # integer class
-            label = f'{self.model.names[c]} {conf:.2f}' #Set label to the class detected
-            command = f'DETECT:{label}:{xyxy}'
-            #self.command_publisher.publish(command)
-            output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
+    #     for *xyxy, conf, cls in reversed(det): #Process prediction loop
+    #         '''
+    #         xyxy (List): bounding box
+    #         conf (int): prediction percentage
+    #         cls (int): class index of prediction
+    #         '''
+    #         c = int(cls)  # integer class
+    #         label = f'{self.model.names[c]} {conf:.2f}' #Set label to the class detected
+    #         command = f'DETECT:{label}:{xyxy}'
+    #         #self.command_publisher.publish(command)
+    #         output_image = plot_one_box(xyxy, output_image, label=label, color=self.colors(c, True)) #Plot bounding box onto output_image
         
-        cv2.imshow("test", output_image)       
-        cv2.waitKey(1)      
-        tinference, tnms = self.model.get_last_inference_time()
-        print("Frame done in {}".format(tinference+tnms))
+    #     cv2.imshow("test", output_image)       
+    #     cv2.waitKey(1)      
+    #     tinference, tnms = self.model.get_last_inference_time()
+    #     print("Frame done in {}".format(tinference+tnms))
      
     # ===================================== LANE DETECT ========================================
     
@@ -175,7 +202,7 @@ class perceptionNODE():
         """
         self._image = self.bridge.imgmsg_to_cv2(msg)
 
-    def send_perceptionInfo(self, scene):
+    def send_perceptionInfo(self, scene, count):
         
         """
         Send message via topic "automobile/lane"
@@ -191,20 +218,30 @@ class perceptionNODE():
         calibrate_scence = self.camera.undistort(scene)
         lane_detection_result = self.camera._runDetectLane(calibrate_scence)
         bev_img = lane_detection_result['BEV']
+        thresh_show = lane_detection_result['thresh']
+        # cv2.imshow("Perception", thresh)
+        # cv.waitKey(3)
         msg = perception()
         if lane_detection_result is not None:
-            msg.steer_angle             = lane_detection_result['steer_angle']
+            # msg.steer_angle             = lane_detection_result['steer_angle']
             msg.radius_of_curvature     = lane_detection_result['radius'] 
             msg.left_lane_type          = lane_detection_result['left_lane_type'] 
             msg.left_lane_type          = lane_detection_result['right_lane_type']
+            msg.one_lane                =  lane_detection_result['one_lane']
         else:
             
-            msg.steer_angle             = 0
+            # msg.steer_angle             = 0
+            msg.one_lane                = 3
             msg.radius_of_curvature     = -1
             msg.left_lane_type          = 0
             msg.left_lane_type          = 0
+
+        # cv2.imwrite(IMG_DIR + '/' + 'ckpt_' + str(count) + '.png', thresh)        
+        msg.steer_angle = lane_detection_result['steer_angle']
+        msg.angle_curvature = lane_detection_result['angle_curvature']
         self.lane_publisher.publish(msg)
         self.send_BEV(bev_img)
+    
 
     def send_laneInfo(self, scene):
         """
@@ -247,25 +284,8 @@ class perceptionNODE():
         send_image_thresh = self.bridge.cv2_to_imgmsg(img, encoding="passthrough")
         self.bev_thresh_publisher.publish(send_image_thresh)
     # ===================================== READ ==========================================
-    def _read(self):
-        """ It's represent the reading activity on the the serial.
-        """
-        while not rospy.is_shutdown():
-            try:
-                print("hello from perception")
-                time.sleep(2)
-                 
-            except UnicodeDecodeError:
-                pass     
-    # ===================================== WRITE ==========================================
-    def _write(self, msg):
-        """ Represents the writing activity on the the serial.
-        """
-        command = json.loads(msg.data)
-        #command = msg.data
-        print(command)
 
-    
+
 if __name__ == "__main__":
     perNod = perceptionNODE()
     perNod.run()

@@ -6,3 +6,4 @@ float32 width_bottomleft
 float32 height_bottomleft
 float32 width_bottomright
 float32 height_bottomright
+int32   angle_curvature

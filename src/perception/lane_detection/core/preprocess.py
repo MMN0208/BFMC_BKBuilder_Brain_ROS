@@ -65,7 +65,7 @@ class Preprocessor:
         self.sobel_kernel_size = params_processing['sobel_kernel_size'] 
         self.lower_white = params_processing['lower_white']
         self.upper_white = params_processing['upper_white']
-        #self.tracker = Trackbars()
+        # self.tracker = Trackbars()
         print("Init processing images")
         
 
@@ -100,7 +100,7 @@ class Preprocessor:
         H, W, C = img.shape
 
         src = params_processing['src_points']
-        # src = self.tracker.getValPoints()
+        # dst = self.tracker.getValPoints()
         dst = params_processing['dst_points']
         transform_view = cv.getPerspectiveTransform(src, dst)
         inverse_transform_view = cv.getPerspectiveTransform(dst, src)

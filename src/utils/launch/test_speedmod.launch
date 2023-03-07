@@ -1,4 +1,4 @@
 <launch>
     <node pkg="output" type="serialNODE.py" 	name="serialNODE"  		output="screen" cwd="node"/>
-    <node pkg="action" type="actionNODE.py" 	name="actionNODE"  		output="screen" cwd="node"/>
+    <node pkg="control" type="controlNODE.py" 	name="controlNODE"  		output="screen" cwd="node"/>
 </launch>

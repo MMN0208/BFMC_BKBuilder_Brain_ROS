@@ -47,14 +47,8 @@ class TrafficSign(Enum):
     PRIORITY_SIGN = 4
     ROUNDABOUT_SIGN = 5
     STOP_SIGN = 6
-    
-    
-    
     HIGHWAY_ENTRANCE_SIGN = 8
     HIGHWAY_EXIT_SIGN = 7
-    
-    
-    
     NO_SIGN = 9
     
 class TrafficLightRule(Enum):
@@ -66,10 +60,20 @@ class LanePosition(Enum):
     LEFT_LANE = 0
     RIGHT_LANE = 1
     
+class LaneVisibility(Enum):
+    BOTH = 0
+    LEFT = 1
+    RIGHT = 2
+    NONE = 3
+    
 class SpeedMod(Enum):
     NORMAL = 0
     HIGH = 1
     LOW = 2
+    
+# ============================ CAR CONSTRAINTS ===========================================
+MAX_SPEED = 0.2
+MAX_STEER = 30.0
 
 # =============================== CONFIG =================================================
 testRUNNING         =  True
@@ -80,7 +84,7 @@ testTRAFFICLIGHT    =  True
 testTRAFFICSIGN     =  False
 testCROSSWALK       =  True
 DEBUG               =  True
-DEBUG_ANGLE         =  False
+DEBUG_ANGLE         =  True
 DEBUG_MOD_SPEED     =  False
 
 # =============================== BUFFER =================================================
@@ -120,8 +124,15 @@ class actionNODE:
         self.Semaphorestart_subscriber = rospy.Subscriber("/automobile/semaphore/start", Byte, self.semaphore_start_update)
         #MORE SUBSCRIBING IF AVAILABLE
         
+        # STEERING PID 
+        self.previous_err = 0
+        self.integral_err = 0
+        self.offset_steer = 0.05
+        
         #INIT STATE
-        self.sys_state = SystemStates.OFFLINE
+        # self.sys_state = SystemStates.OFFLINE
+        self.sys_state = SystemStates.ONLINE   #Test
+
         self.run_state = RunStates.RUNNING
         self.cur_x = 0
         self.cur_y = 0
@@ -132,7 +143,14 @@ class actionNODE:
         self.lane_switchable = False
         self.sign_start_time = 0
         self.base_speed = 0.2
+        
+        # steering
         self.steer_angle = 0
+        self.curr_steer_angle = 0
+        self.steer_end = 0
+        self.see_left_lane = True
+        self.see_right_lane = True
+
         self.lock = 0
         self.unlock = 1
         self.control = controlNODE()
@@ -153,22 +171,132 @@ class actionNODE:
                 self.unlock = 1
                 self.lock = 0
                 
+    # STEERING PID function
+    def steering_pid(self, input):
+        Ki = 0.09
+        Kp = 0.4
+        Kd = 0.04998
+        
+        processed = input
+        setpoint = float(math.floor(input))
+        error = math.fabs(setpoint - processed)
+        
+        integral_err = self.integral_err + error
+        derivative_err = error - self.previous_err
+        
+        # calculate da shitz
+        output = Kp * error + Ki * integral_err + Kd * derivative_err
+        
+        # save for next iteration
+        self.previous_err = error
+        self.integral_err = integral_err
+        print("Desired angle = {}. Actual angle = {}".format(setpoint, processed))  
+        return output
+    
+    # parking functions
+    def parking_perpendicular(self, slot1, slot2):
+        if slot1 == 1 and slot2 == 0:
+            self.control.setSteer(-23)
+            self.control.moveForward(0.5, 0.1)
+            time.sleep(5)
+            self.control.setSteer(20)
+            self.control.moveForward(0.9, -0.1)
+        elif slot1 == 0 and slot2 == 1:
+            self.control.setSteer(23)
+            self.control.moveForward(1.5, 0.1)
+
+    def parking_parallel(self, slot1, slot2):
+        if slot1 == 1 and slot2 == 0:
+            self.control.setSteer(23)
+            #self.control.moveForward(0.5, 0.3)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(-23)
+            time.sleep(1)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(5)
+            time.sleep(1)
+            self.control.moveForward(0.4, 0.1)
+        elif slot1 == 0 and slot2 == 1:
+            self.control.setSteer(23)
+            #self.control.moveForward(0.5, 0.3)
+            self.control.setSpeed(-0.1)
+            time.sleep(5)
+            self.control.setSpeed(0)
+            self.control.setSteer(-23)
+            time.sleep(1)
+            self.control.setSpeed(-0.1)
+            time.sleep(4)
+            self.control.setSpeed(0)
+            self.control.setSteer(5)
+            time.sleep(1)
+            #self.control.moveForward(0.5, 0.1)
+                
     def lane_check(self, msg):
+        global MAX_STEER
+        
+        OFFSET_ANGLE = 3.0
+        OFFSET_TURN = 8.0
+        
+        TURN_ANGLE = MAX_STEER - 5.0
+
         if self.sys_state == SystemStates.ONLINE:
-            if self.lane == LanePosition.RIGHT_LANE: #on the right side of the road, check left lane type for lane switching
-                if msg.left_lane_type == 1: #dotted lane
-                    self.lane_switchable = True
-                else:
-                    self.lane_switchable = False
+            # if self.lane == LanePosition.RIGHT_LANE: #on the right side of the road, check left lane type for lane switching
+            #     if msg.left_lane_type == 1: #dotted lane
+            #         self.lane_switchable = True
+            #     else:
+            #         self.lane_switchable = False
                     
-            else: #on the left side of the road, check right lane type for lane switching
-                if msg.right_lane_type == 1: #dotted lane
-                    self.lane_switchable = True
-                else:
-                    self.lane_switchable = False
+            # else: #on the left side of the road, check right lane type for lane switching
+            #     if msg.right_lane_type == 1: #dotted lane
+            #         self.lane_switchable = True
+            #     else:
+            #         self.lane_switchable = False
+                    
             if DEBUG_ANGLE:
-                print("streer angle: ",msg.steer_angle)
-            self.steer_angle = msg.steer_angle
+                print("radius of curvature:", msg.radius_of_curvature)
+                print("steer angle: ", msg.steer_angle)
+                print("angle curvature:", msg.angle_curvature)
+                print("lane_visibility: ", msg.one_lane)
+                # 0: both
+                # 1: left    
+                # 2: right
+                # 3: none
+                       
+            #processed_steer_angle = self.steering_pid(msg.steer_angle)
+            if msg.one_lane == LaneVisibility.NONE.value:
+                if self.run_state == RunStates.RUNNING:
+                    processed_steer_angle = msg.steer_angle
+                    if abs(processed_steer_angle) > MAX_STEER:
+                        if processed_steer_angle > 0:
+                            self.steer_angle = MAX_STEER
+                        else:
+                            self.steer_angle = -MAX_STEER
+                            
+                    elif abs(processed_steer_angle - self.curr_steer_angle) > OFFSET_ANGLE:
+                    # else:
+                        self.steer_angle = processed_steer_angle
+
+                elif self.run_state == RunStates.HARD_TURN:
+                    self.run_state = RunStates.RUNNING
+            
+            elif msg.one_lane == 1: # turn right
+                if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
+                    self.curr_steer_angle = TURN_ANGLE
+                    self.run_state = RunStates.HARD_TURN
+            
+            elif msg.one_lane == 2: # turn left
+                if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
+                    self.curr_steer_angle = -TURN_ANGLE
+                    self.run_state = RunStates.HARD_TURN
+            else:
+                if self.run_state == RunStates.RUNNING:
+                    self.steer_angle = 0
+                elif self.run_state == RunStates.HARD_TURN:
+                    self.run_state = RunStates.RUNNING
         
     def pedestrian_check(self, msg):
         if self.sys_state == SystemStates.ONLINE:
@@ -203,6 +331,7 @@ class actionNODE:
                             print("Running slow towards CROSSWALK")
                         self.speed_mod = SpeedMod.LOW
                         self.run_state = RunStates.CROSSWALK
+                        self.sign_start_time = time.time()
                 
                 elif traffic_sign_type == TrafficSign.PRIORITY_SIGN.value:
                     # traffic_sign_type = TrafficSign.PRIORITY_SIGN
@@ -254,6 +383,9 @@ class actionNODE:
         global light_color
         light_color[0] = msg.data
         
+        if DEBUG:
+            print(light_color)
+        
     def semaphore_slave_update(self, msg):
         global light_color
         light_color[1] = msg.data
@@ -287,17 +419,38 @@ class actionNODE:
                 self.speed_mod = NORMAL
                 
     def running_action(self):
-        self.control.setSteer(self.steer_angle)
-        OFFSET_ANGLE = 0.05
-        # MOD = 10
-        offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
-        if DEBUG_MOD_SPEED:
-            print("offset speed: ",offset_speed)
-        if (self.base_speed - offset_speed) > 0:
-            self.control.setSpeed(self.base_speed - offset_speed)
-        else:
-            self.speed_action()
+        global MAX_SPEED
+        global MAX_STEER
         
+        EPSILON = 0.45
+        # MOD = 10
+        #offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
+        # if DEBUG_MOD_SPEED:
+        #     print("offset speed: ",offset_speed)
+        # if (self.base_speed - offset_speed) > 0:
+        #     self.control.setSpeed(self.base_speed - offset_speed)
+        # else:
+        #     self.speed_action()
+        
+        if self.steer_end < time.time():
+            self.steer_end = time.time() + 0.1
+            self.curr_steer_angle = self.steer_angle
+        
+        speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * EPSILON * MAX_SPEED)
+        #self.control.setSteer(self.curr_steer_angle)
+        self.control.setSteer(0)
+        print("angle: {}".format(self.curr_steer_angle))
+        #self.control.setSpeed(speed)
+        self.control.setSpeed(0.1)
+        print("speed: {}".format(speed))
+        
+    def turn_action(self):
+        EPSILON = 0.3
+        
+        self.setSteer(self.curr_steer_angle)
+        speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * 0.3 * MAX_SPEED)
+        self.setSpeed(speed)
+
     def wait_action(self):
         global traffic_sign_type
         global traffic_light_id
@@ -329,6 +482,8 @@ class actionNODE:
         global pedestrian
         
         if pedestrian == False:
+            if (time.time() - self.sign_start_time) >= 3:
+                self.lock_state(RunStates.RUNNING)
             self.speed_action()
         else:
             wait_for_pedestrian = True
@@ -348,7 +503,7 @@ class actionNODE:
             self.lock_state(RunStates.RUNNING)
             
     def move_to_destination(self, des_x, des_y):
-        MAX_STEER = 23.00
+        MAX_STEER = 30.00
         while abs(des_x - self.cur_x) >= 0.3 and abs(des_y - self.cur_y) >= 0.3:
             diff_x = des_x - self.cur_x
             diff_y = des_y - self.cur_y
@@ -373,6 +528,12 @@ class actionNODE:
                     if DEBUG: 
                         print("RUNNING")                
                     self.running_action()
+                    
+                elif self.run_state == RunStates.HARD_TURN:
+                    if DEBUG:
+                        print("HARD TURN")
+                    self.turn_action()
+            
             if testWAITING:
                 if self.run_state == RunStates.WAIT:
                     if DEBUG: 
@@ -401,21 +562,29 @@ class actionNODE:
         global light_color
         while not rospy.is_shutdown(): 
             # while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
-            #     print("Waiting for start signal")
             if self.sys_state == SystemStates.OFFLINE:
                 if DEBUG: 
                     print("WAITING FOR START SIGNAL")
-                    
                 if traffic_light_id:
                     if light_color[traffic_light_id - 1] == TrafficLightRule.GREEN_LIGHT.value:
                         self.sys_state = SystemStates.ONLINE
-                        
+                            
             elif self.sys_state == SystemStates.ONLINE:
                 self.auto_control()
             
             rospy.sleep(0.1)
+            
+def main():
+    action_node = actionNODE()
+    rospy.loginfo("START actionNODE")
+    try:
+        action_node.run()
+    except:
+        print("Your code is bugged lil bro")
+        action_node.control.brake(0)
+    finally:
+        action_node.control.brake(0)
+        rospy.loginfo("STOP actionNODE")
                 
 if __name__ == "__main__":
-    action_node = actionNODE()
-    action_node.run()
-            
+    main()

@@ -115,9 +115,9 @@ class Trackbars:
     def __init__(self):
         self.initPointTrackings([0, 299, 0, 270])
 		
-        self.initSrcTracking()
+        # self.initSrcTracking()
         self.initSrcView()
-        self.initDstView()
+        # self.initDstView()
 
     def initSrcView(self, width = 640, height = 360):
         cv.namedWindow('SrcView')
