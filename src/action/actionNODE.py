@@ -268,6 +268,9 @@ class actionNODE:
                        
             #processed_steer_angle = self.steering_pid(msg.steer_angle)
             if msg.one_lane == LaneVisibility.BOTH.value: # lane following
+                if self.run_state == RunStates.HARD_TURN:
+                    self.run_state = RunStates.RUNNING
+                    
                 if self.run_state == RunStates.RUNNING:
                     processed_steer_angle = msg.steer_angle
                     if abs(processed_steer_angle) > MAX_STEER:
@@ -279,9 +282,6 @@ class actionNODE:
                     elif abs(processed_steer_angle - self.curr_steer_angle) > OFFSET_ANGLE:
                     # else:
                         self.desired_steer_angle = processed_steer_angle
-
-                elif self.run_state == RunStates.HARD_TURN:
-                    self.run_state = RunStates.RUNNING
             
             elif msg.one_lane == LaneVisibility.LEFT.value: # turn right
                 if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
@@ -300,10 +300,11 @@ class actionNODE:
                     self.run_state = RunStates.HARD_TURN
                     
             elif msg.one_lane == LaneVisibility.NONE.value: # no lanes -> go straight forward
+                if self.run_state == RunStates.HARD_TURN:
+                    self.run_state = RunStates.RUNNING
+                    
                 if self.run_state == RunStates.RUNNING:
                     self.desired_steer_angle = 0
-                elif self.run_state == RunStates.HARD_TURN:
-                    self.run_state = RunStates.RUNNING
         
     def pedestrian_check(self, msg):
         if self.sys_state == SystemStates.ONLINE:
