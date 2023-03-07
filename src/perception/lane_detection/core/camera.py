@@ -417,14 +417,14 @@ class Camera():
         angleDegree = 0
         offset_x =  320
         offset_y =  480
-        ratio_x = 640 / 144
-        ratio_y = 480 / 144
+        # ratio_x = 1
+        # ratio_y = 1 
 
-        img_angle = cv.resize(img_angle, (144, 144))
+        # img_angle = cv.resize(img_angle, (144, 144))
         
         center_x, center_y = self.computeCenter(img_angle)
-        center_x = center_x * ratio_x
-        center_y = center_y * ratio_y 
+        # center_x = center_x * ratio_x
+        # center_y = center_y * ratio_y 
         
         centers = dict()
         slope = 0
@@ -441,22 +441,35 @@ class Camera():
     
     def computeCenter(self, roadImg):
 
-        roadImg = roadImg.astype(np.int32)
-        roadImg = roadImg * 255 
-        count = 0
+        threshold = 240 
         center_x = 0
         center_y = 0
-        for i in range(0, 144):
-            for j in range(0, 144):
-                if roadImg[i][j] >= 240:
-                    count += 1
-                    center_x += j
-                    center_y += i
-    
+        
+        roadImg = roadImg.astype(np.int32)
+        roadImg = roadImg * 255 
 
-        if center_x != 0 or center_y != 0 or count != 0:
+        # count = 0
+        #     
+        # for i in range(0, 144):
+        #     for j in range(0, 144):
+        #         if roadImg[i][j] >= 240:
+        #             count += 1
+        #             center_x += j
+        #             center_y += i
+
+        # if center_x != 0 or center_y != 0 or count != 0:
+        #     center_x = center_x / count
+        #     center_y = center_y / count
+
+        pixels_indices = np.argwhere(roadImg >= threshold)
+        stats_pixels = pixels_indices.sum(axis =0 )                 # Return matrix of nx2
+        count = stats_pixels.shape[0]
+        center_x = stats_pixels[1] / count
+        center_y = stats_pixels[0] / count
+
+        if  center_x != 0 or  center_y != 0 or count != 0:
             center_x = center_x / count
-            center_y = center_y / count
+            center_y = center_y / count    
 
         return center_x, center_y
     
