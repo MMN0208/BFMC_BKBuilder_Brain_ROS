@@ -426,11 +426,11 @@ class actionNODE:
             new_speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * EPSILON * MAX_SPEED)
         else:
             new_speed = 0.4
-        #self.control.setSteer(self.curr_steer_angle)
-        self.control.setSteer(0)
+        self.control.setSteer(self.curr_steer_angle)
+        #self.control.setSteer(0)
         print("angle: {}".format(self.curr_steer_angle))
-        #self.control.setSpeed(new_speed)
-        self.control.setSpeed(0.1)
+        self.control.setSpeed(new_speed)
+        #self.control.setSpeed(0.1)
         print("speed: {}".format(new_speed))
             
 

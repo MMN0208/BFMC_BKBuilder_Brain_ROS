@@ -545,12 +545,12 @@ class Camera():
         start_point = (400, 480)
         end_point = (center_x, center_y)
 
-        # thresh = cv.putText(thresh, string, (160, 160), cv.FONT_HERSHEY_PLAIN, 60, (0,255,0), 10, cv.LINE_AA)
+        thresh = cv.putText(thresh, string, (160, 160), cv.FONT_HERSHEY_PLAIN, 60, (0,255,0), 10, cv.LINE_AA)
         thresh = cv.line(thresh, start_point, end_point, color = (255, 255,0), thickness = 50)  
             # steer_angle = 0.5 * steer_angle + 0.5 * steer_angle_curvature
-        # cv.imshow("Thresh", thresh)
-        # cv.imshow("Human", warped)
-        # cv.waitKey(3)
+        cv.imshow("Thresh", thresh)
+        cv.imshow("Human", warped)
+        cv.waitKey(3)
         find_lane_result['angle_curvature'] = int(math.ceil(steer_angle_curvature))
         ################## Visualization #################
         if DEBUG_VISUAL:

@@ -59,35 +59,16 @@ class controlNODE():
         
         
     # # ===================================== RUN ==========================================
-    # def run(self):
-    #     rospy.loginfo("starting controlNODE")
-    #     while not rospy.is_shutdown():
-    #         self.activatePID()
-    #         time.sleep(1)
-    #         self.setSteer(10)
-    #         time.sleep(0.1)
-    #         self.setSteer(15)
-    #         time.sleep(0.1)
-    #         self.setSteer(5)
-    #         time.sleep(0.1)
-    #         self.setSteer(10)
-    #         time.sleep(0.1)
-    #         self.setSteer(15)
-    #         time.sleep(0.1)
-    #         self.setSteer(5)
-    #         time.sleep(0.1)
-    #         self.setSteer(10)
-    #         time.sleep(0.1)
-    #         self.setSteer(15)
-    #         time.sleep(0.1)
-    #         self.setSteer(5)
-    #         time.sleep(0.1)
-    #         self.setSteer(10)
-    #         time.sleep(0.1)
-    #         self.setSteer(15)
-    #         time.sleep(0.1)
-    #         self.setSteer(5)
-    #         time.sleep(0.1)
+#     def run(self):
+#         rospy.loginfo("starting controlNODE")
+#         while not rospy.is_shutdown():
+#             self.activatePID()
+#             time.sleep(1)
+#             self.setSteer(23)
+#             time.sleep(1)
+#             self.setSteer(-23)
+#             time.sleep(1)
+
 
         
 # if __name__ == "__main__":
