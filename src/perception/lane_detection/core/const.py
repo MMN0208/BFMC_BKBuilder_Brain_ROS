@@ -16,9 +16,9 @@ IMG_SIZE  = (640, 480)
 # IMG_SRC = '/home/quangngcs/Desktop/Github/BFMC_BKBuilder_Brain_ROS/src/perception/lane_detection/frame_test/frame_1001.png' 
 IMG_DIR = "/home/pi/BFMC_BKBuilder_Brain_ROS/src/perception/checkpoints"
 W, H = IMG_SIZE
-wTop =  570
-hTop =  37
-wBot =  127 
+wTop =  640
+hTop =  0   
+wBot =  102 
 hBot =  480
 
 # wTop = 426
@@ -32,7 +32,7 @@ params_processing = {
     'lower_white':              np.array([0, 150, 10]),
     'upper_white':              np.array([250, 250, 255]),
     'dst_points':               np.array([[wBot, hBot], [W - wBot, hBot], [wTop, hTop], [W - wTop, hTop]], dtype = np.float32),
-    'src_points':               np.array([[0, 315], [535, 318], [428, 213], [125, 207]], dtype=np.float32),
+    'src_points':               np.array([[0, 421], [640,  421], [530, 298], [85, 298]],  dtype=np.float32)  ,
 
     'thd_highlight_L':                  255,                # mid L         # low-pass filter on H-chanel
     'thd_highlight_S':                  0,                  # low S         # low-pass filter on H-chanel

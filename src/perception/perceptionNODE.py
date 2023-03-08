@@ -215,7 +215,8 @@ class perceptionNODE():
             int32 midpoint
             left_lane_type, right_lane_type, radius, steer_angle
         """
-        calibrate_scence = self.camera.undistort(scene)
+        # calibrate_scence = self.camera.undistort(scene)
+        calibrate_scence = scene
         lane_detection_result = self.camera._runDetectLane(calibrate_scence)
         bev_img = lane_detection_result['BEV']
         thresh_show = lane_detection_result['thresh']
