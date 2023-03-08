@@ -95,8 +95,8 @@ class perceptionNODE():
               
         rospy.init_node('perceptionNODE', anonymous=False)
         
-        cv2.namedWindow("Perception", 1)
-        cv2.namedWindow("BEV", 1)
+        # cv2.namedWindow("Perception", 1)
+        # cv2.namedWindow("BEV", 1)
         # self.command_subscriber = rospy.Subscriber("/automobile/perception", String, self._write)      
         #self.command_publisher = rospy.Publisher("/automobile/perception", String)
         self.bridge = CvBridge()
@@ -215,7 +215,8 @@ class perceptionNODE():
             int32 midpoint
             left_lane_type, right_lane_type, radius, steer_angle
         """
-        calibrate_scence = self.camera.undistort(scene)
+        # calibrate_scence = self.camera.undistort(scene)
+        calibrate_scence = scene
         lane_detection_result = self.camera._runDetectLane(calibrate_scence)
         bev_img = lane_detection_result['BEV']
         thresh_show = lane_detection_result['thresh']
@@ -238,9 +239,10 @@ class perceptionNODE():
 
         # cv2.imwrite(IMG_DIR + '/' + 'ckpt_' + str(count) + '.png', thresh)        
         msg.steer_angle = lane_detection_result['steer_angle']
-        msg.angle_curvature = lane_detection_result['angle_curvature']
+        print("Sent angle = {}".format(msg.steer_angle))
+        # msg.angle_curvature = lane_detection_result['angle_curvature']
         self.lane_publisher.publish(msg)
-        self.send_BEV(bev_img)
+        # self.send_BEV(bev_img)
     
 
     def send_laneInfo(self, scene):

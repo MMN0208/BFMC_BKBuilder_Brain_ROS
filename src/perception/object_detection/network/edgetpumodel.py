@@ -96,10 +96,10 @@ class EdgeTPUModel:
         # Check against small epsilon to avoid comparing float/int
         if self.input_scale < 1e-9:
             self.input_scale = 1.0
-        
         if self.output_scale < 1e-9:
             self.output_scale = 1.0
-    
+            
+
         logger.debug("Input scale: {}".format(self.input_scale))
         logger.debug("Input zero: {}".format(self.input_zero))
         logger.debug("Output scale: {}".format(self.output_scale))
@@ -161,7 +161,7 @@ class EdgeTPUModel:
         self.interpreter.invoke()
         
         # Scale output
-        result = (common.output_tensor(self.interpreter, 0).astype('float32') - self.output_zero) * self.output_scale
+        result = (common.output_tensor(self.interpreter, 0).astype('int8') - self.output_zero) * self.output_scale
         self.inference_time = time.time() - tstart
         
         if with_nms:

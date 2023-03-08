@@ -237,6 +237,7 @@ class actionNODE:
                 
     def lane_check(self, msg):
         global MAX_STEER
+        # print("Steerangle before processing: {}".format(msg.steer_angle))
         
         OFFSET_ANGLE = 3.0
         OFFSET_TURN = 8.0
@@ -444,6 +445,8 @@ class actionNODE:
             self.steer_end = time.time() + 0.1
             self.curr_steer_angle = self.desired_steer_angle
         
+        # self.control.setSteer(self.curr_steer_angle)
+        #self.control.setSteer(0)
         speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * EPSILON * MAX_SPEED)
         #self.control.setSteer(self.curr_steer_angle)
         self.control.setSteer(self.curr_steer_angle)
@@ -582,7 +585,6 @@ class actionNODE:
                             
             elif self.sys_state == SystemStates.ONLINE:
                 self.auto_control()
-            
             rospy.sleep(0.1)
             
     def terminate(self):
@@ -594,12 +596,14 @@ def main():
     rospy.loginfo("START actionNODE")
     try:
         action_node.run()
-    except:
+    except Exception as e:
         action_node.terminate()
-        print("Your code is bugged lil bro")
+        print(e)
     finally:
         action_node.terminate()
         rospy.loginfo("STOP actionNODE")
                 
 if __name__ == "__main__":
-    main()
+    action_node = actionNODE()
+    rospy.loginfo("START actionNODE")
+    action_node.run()
