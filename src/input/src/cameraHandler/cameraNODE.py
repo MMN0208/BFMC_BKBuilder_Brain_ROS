@@ -134,7 +134,7 @@ class cameraNODE():
                 print(e)
             
             self._stream.seek(0)
-            self._stream.truncate()
+            self._start_recordingstream.truncate()
             
 if __name__ == "__main__":
     camNod = cameraNODE()

@@ -10,8 +10,8 @@ import random
 
 ####CONFIG DEBUG
 DEBUG_VISUAL = False
-cv.namedWindow("Thresh", 1)
-cv.namedWindow("Human", 1)
+#cv.namedWindow("Thresh", 1)
+#cv.namedWindow("Human", 1)
 
 class Lane:
 
@@ -23,38 +23,22 @@ class Lane:
             
         """
         self.maxSamples = maxSamples 
-        # x values of the last n fits of the line
         self.recent_xfitted = deque(maxlen=self.maxSamples)
-        # Polynomial coefficients for the most recent fit
         self.current_fit = [np.array([False])]  
-        # Polynomial coefficients averaged over the last n iterations
         self.best_fit = None  
-        # Average x values of the fitted line over the last n iterations
         self.bestx = None
-        # Was the line detected in the last iteration?
         self.detected = False 
-        # Radius of curvature of the line in some units
         self.radius_of_curvature = 0 
-        # Distance in meters of vehicle center from the line
         self.line_base_pos = None 
          
     def update_lane(self, ally, allx):
-        # Updates lanes on every new frame
-        # Mean x value 
         self.bestx = np.mean(allx, axis=0)
-        # Fit 2nd order polynomial
         new_fit = np.polyfit(ally, allx, 2)
-        # Update current fit
         self.current_fit = new_fit
-        # Add the new fit to the queue
         self.recent_xfitted.append(self.current_fit)
-        # Use the queue mean as the best fit
         self.best_fit = np.mean(self.recent_xfitted, axis=0)
-        # meters per pixel in y dimension
         self.ym_per_pix = 1.0
-        # meters per pixel in x dimension
         self.xm_per_pix = 1.0 
-        # Calculate radius of curvature
         fit_cr = np.polyfit(ally*self.ym_per_pix, allx*self.xm_per_pix, 2)
         y_eval = np.max(ally)
 
@@ -381,36 +365,6 @@ class Camera():
 
         return undist
 
-    def generate_output(self, warped, threshold_img, polynomial_img, lane_img):
-
-        
-        fontScale=1
-        thickness=2
-        fontFace = cv.FONT_HERSHEY_PLAIN
-        out_img = np.zeros((720, 1280,3), np.uint8)
-        out_img[:360, :640, :] = lane_img
-        cv.putText(out_img, "Detection", (50, 100), fontFace, fontScale, (0,0,255), thickness, lineType = cv.LINE_AA)
-        
-        
-        # Perspective transform image
-        out_img[360:, :640:,:] = cv.resize(warped,(640, 360))
-        boxsize, _ = cv.getTextSize("Transformed", fontFace, fontScale, thickness)
-        cv.putText(out_img, "Transformed", (400, 400), fontFace, fontScale,(0,0,255), thickness,  lineType = cv.LINE_AA)
-    
-        # Threshold image
-        resized = cv.resize(threshold_img,(640, 360))
-        resized=np.uint8(resized)
-        gray_image = cv.cvtColor(resized*255, cv.COLOR_GRAY2RGB)
-        out_img[:360, 640:, :] = cv.resize(gray_image,(640, 360))
-        boxsize, _ = cv.getTextSize("Filtered", fontFace, fontScale, thickness)
-        cv.putText(out_img, "Filtered", (100, 700), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
-    
-        # Polynomial lines
-        out_img[360:, 640:, :] = cv.resize(polynomial_img,(640, 360))
-        boxsize, _ = cv.getTextSize("Detected Lanes", fontFace, fontScale, thickness)
-        cv.putText(out_img, "Detected Lanes", (int(1494-boxsize[0]/2),521), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
-        
-        return out_img 
     
     def angleCalculator(self, img_angle):
 
@@ -421,7 +375,9 @@ class Camera():
         # ratio_y = 1 
 
         # img_angle = cv.resize(img_angle, (144, 144))
-        
+        center_x = 0
+        center_y = 0
+        angleDegree= 0
         center_x, center_y = self.computeCenter(img_angle)
         # center_x = center_x * ratio_x
         # center_y = center_y * ratio_y 
@@ -433,7 +389,7 @@ class Camera():
             slope = (center_x - offset_x) / float (center_y - offset_y) # (72, 144) is center of (144, 144) image
             angleRadian = np.arctan(slope)
             angleDegree = float(angleRadian * 180.0 / math.pi)
-
+        # print("Angle in compute = {}".format(angleDegree))
         centers['x'] = center_x
         centers['y'] = center_y
         centers['slope'] = slope
@@ -463,9 +419,10 @@ class Camera():
 
         pixels_indices = np.argwhere(roadImg >= threshold)
         stats_pixels = pixels_indices.sum(axis =0 )                 # Return matrix of nx2
-        count = stats_pixels.shape[0]
-        center_x = stats_pixels[1] / count
-        center_y = stats_pixels[0] / count
+        # print(stats_pixels)
+        count = pixels_indices.shape[0]
+        center_x = stats_pixels[1] 
+        center_y = stats_pixels[0] 
 
         if  center_x != 0 or  center_y != 0 or count != 0:
             center_x = center_x / count
@@ -473,35 +430,7 @@ class Camera():
 
         return center_x, center_y
     
-    def steerAngleCurvature(self, desired_radius, img):
-       
-        steering_angle = 0
-        max_steering_angle = self.max_steer 
-        min_steering_angle = self.min_steer
-        eps = 1e-6
-        offset_x = 100
-        offset_y = 195
-
-        angleDegree, centers = self.angleCalculator(img)
-        slope = centers['slope']
-        # Calculate the steering angle based on the desired radius of the turn
-        if abs(slope) > 0.1:
-            print("Desired radius = {}".format(desired_radius)) 
-            radius = abs(desired_radius / (2 * slope + eps))
-            print("Radius = {}".format(radius))
-            steering_angle = np.arctan(1 / (eps + radius)) * 180 / np.pi
-            if slope < 0:
-                steering_angle = -steering_angle
-        else:
-            steering_angle = 0
-        print("Angle in camera = {}".format(steering_angle))
-        # Limit the steering angle to the maximum and minimum values
-        if steering_angle > max_steering_angle:
-            steering_angle = max_steering_angle
-        elif steering_angle < min_steering_angle:
-            steering_angle = min_steering_angle
-        print("Curvature angle = {}".format(steering_angle))
-        return steering_angle * 0.5 + angleDegree * 0.5
+    
 
 
     def _runDetectLane(self, img):
@@ -515,7 +444,7 @@ class Camera():
         
         ####    Slide window search
         find_lane_result = self.find_lanes(thresh)
-        find_lane_result['steer_angle'] = random.randint(-1, 1)
+        # find_lane_result['steer_angle'] = random.randint(-1, 1)
         
         ##  Check left lane and right lane
         left_line_allx = find_lane_result['left_line_allx']
@@ -539,12 +468,12 @@ class Camera():
         ###     Hough lines transform
         Hough_lines = cv.HoughLinesP(thresh, rho=1, theta=np.pi/180, threshold=20, minLineLength=20)
         desired_radius = find_lane_result['radius']
-        steer_angle_curvature = self.steerAngleCurvature(desired_radius, thresh)
+        # steer_angle_curvature = self.steerAngleCurvature(desired_radius, thresh)
         
-        if find_lane_result['angle_change']:
-            steer_angle, centers  = self.angleCalculator(thresh)
-            #steer_angle = self.computeAngleTest(thresh)
-            find_lane_result['steer_angle'] = steer_angle
+        # if find_lane_result['angle_change']:
+        steer_angle, centers  = self.angleCalculator(thresh)
+        #steer_angle = self.computeAngleTest(thresh)
+        find_lane_result['steer_angle'] = steer_angle
 
         center_x = centers['x']
         center_y = centers['y']
@@ -557,14 +486,16 @@ class Camera():
 
         start_point = (400, 480)
         end_point = (center_x, center_y)
-
+        
+        print("End point: {}".format(end_point))
         thresh = cv.putText(thresh, string, (160, 160), cv.FONT_HERSHEY_PLAIN, 60, (0,255,0), 10, cv.LINE_AA)
         thresh = cv.line(thresh, start_point, end_point, color = (255, 255,0), thickness = 50)  
-            # steer_angle = 0.5 * steer_angle + 0.5 * steer_angle_curvature
+        # print("Angle = ".format(find_lane_result['steer_angle']))
         cv.imshow("Thresh", thresh)
         cv.imshow("Human", warped)
         cv.waitKey(3)
-        find_lane_result['angle_curvature'] = int(math.ceil(steer_angle_curvature))
+        # find_lane_result['angle_curvature'] = int(math.ceil(steer_angle_curvature))
+
         ################## Visualization #################
         if DEBUG_VISUAL:
             lane_img = self.draw_lane(img, thresh, inverse_transform)
@@ -580,3 +511,64 @@ class Camera():
             return test_results, find_lane_result       # Test results
         
         return find_lane_result
+
+    # def steerAngleCurvature(self, desired_radius, img):
+       
+    #     steering_angle = 0
+    #     max_steering_angle = self.max_steer 
+    #     min_steering_angle = self.min_steer
+    #     eps = 1e-6
+    #     offset_x = 100
+    #     offset_y = 195
+
+    #     angleDegree, centers = self.angleCalculator(img)
+    #     slope = centers['slope']
+    #     # Calculate the steering angle based on the desired radius of the turn
+    #     if abs(slope) > 0.1:
+    #         print("Desired radius = {}".format(desired_radius)) 
+    #         radius = abs(desired_radius / (2 * slope + eps))
+    #         print("Radius = {}".format(radius))
+    #         steering_angle = np.arctan(1 / (eps + radius)) * 180 / np.pi
+    #         if slope < 0:
+    #             steering_angle = -steering_angle
+    #     else:
+    #         steering_angle = 0
+    #     print("Angle in camera = {}".format(steering_angle))
+    #     # Limit the steering angle to the maximum and minimum values
+    #     if steering_angle > max_steering_angle:
+    #         steering_angle = max_steering_angle
+    #     elif steering_angle < min_steering_angle:
+    #         steering_angle = min_steering_angle
+    #     print("Curvature angle = {}".format(steering_angle))
+    #     return steering_angle * 0.5 + angleDegree * 0.5
+    
+    # def generate_output(self, warped, threshold_img, polynomial_img, lane_img):
+
+        
+    #     fontScale=1
+    #     thickness=2
+    #     fontFace = cv.FONT_HERSHEY_PLAIN
+    #     out_img = np.zeros((720, 1280,3), np.uint8)
+    #     out_img[:360, :640, :] = lane_img
+    #     cv.putText(out_img, "Detection", (50, 100), fontFace, fontScale, (0,0,255), thickness, lineType = cv.LINE_AA)
+        
+        
+    #     # Perspective transform image
+    #     out_img[360:, :640:,:] = cv.resize(warped,(640, 360))
+    #     boxsize, _ = cv.getTextSize("Transformed", fontFace, fontScale, thickness)
+    #     cv.putText(out_img, "Transformed", (400, 400), fontFace, fontScale,(0,0,255), thickness,  lineType = cv.LINE_AA)
+    
+    #     # Threshold image
+    #     resized = cv.resize(threshold_img,(640, 360))
+    #     resized=np.uint8(resized)
+    #     gray_image = cv.cvtColor(resized*255, cv.COLOR_GRAY2RGB)
+    #     out_img[:360, 640:, :] = cv.resize(gray_image,(640, 360))
+    #     boxsize, _ = cv.getTextSize("Filtered", fontFace, fontScale, thickness)
+    #     cv.putText(out_img, "Filtered", (100, 700), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
+    
+    #     # Polynomial lines
+    #     out_img[360:, 640:, :] = cv.resize(polynomial_img,(640, 360))
+    #     boxsize, _ = cv.getTextSize("Detected Lanes", fontFace, fontScale, thickness)
+    #     cv.putText(out_img, "Detected Lanes", (int(1494-boxsize[0]/2),521), fontFace, fontScale,(255,255,255), thickness,  lineType = cv.LINE_AA)
+        
+    #     return out_img 
