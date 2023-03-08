@@ -574,6 +574,9 @@ class actionNODE:
     def run(self):
         global traffic_light_id
         global light_color
+        
+        rospy.on_shutdown(self.terminate)
+        
         while not rospy.is_shutdown(): 
             # while not start_signal: #cho den xanh de xuat phat, bien start chi duoc dung mot lan
             if self.sys_state == SystemStates.OFFLINE:
@@ -586,24 +589,26 @@ class actionNODE:
             elif self.sys_state == SystemStates.ONLINE:
                 self.auto_control()
             rospy.sleep(0.1)
-            
+    
     def terminate(self):
-        self.sys_state = SystemStates.OFFLINE
         self.control.brake(0)
+        
+
+def terminate(action_node):
+    action_node.control.brake(0)
+    rospy.loginfo("STOP actionNODE")
             
 def main():
     action_node = actionNODE()
     rospy.loginfo("START actionNODE")
     try:
         action_node.run()
+    
     except Exception as e:
-        action_node.terminate()
-        print(e)
+        print(str(e))
+        
     finally:
-        action_node.terminate()
-        rospy.loginfo("STOP actionNODE")
+        rospy.loginfo("STOP actionNODE")    
                 
 if __name__ == "__main__":
-    action_node = actionNODE()
-    rospy.loginfo("START actionNODE")
-    action_node.run()
+    main()
