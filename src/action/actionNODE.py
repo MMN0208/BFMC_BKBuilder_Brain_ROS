@@ -145,7 +145,7 @@ class actionNODE:
         self.base_speed = 0.2
         
         # steering
-        self.steer_angle = 0
+        self.desired_steer_angle = 0
         self.curr_steer_angle = 0
         self.steer_end = 0
         self.see_left_lane = True
@@ -242,7 +242,7 @@ class actionNODE:
         OFFSET_ANGLE = 3.0
         OFFSET_TURN = 8.0
         
-        TURN_ANGLE = MAX_STEER - 5.0
+        # TURN_ANGLE = MAX_STEER - 5.0
 
         if self.sys_state == SystemStates.ONLINE:
             # if self.lane == LanePosition.RIGHT_LANE: #on the right side of the road, check left lane type for lane switching
@@ -268,48 +268,44 @@ class actionNODE:
                 # 3: none
                        
             #processed_steer_angle = self.steering_pid(msg.steer_angle)
-            if self.run_state == RunStates.RUNNING:
+            if msg.one_lane == LaneVisibility.BOTH.value: # lane following
+                if self.run_state == RunStates.HARD_TURN:
+                    self.run_state = RunStates.RUNNING
+                    
+                if self.run_state == RunStates.RUNNING:
                     processed_steer_angle = msg.steer_angle
                     if abs(processed_steer_angle) > MAX_STEER:
                         if processed_steer_angle > 0:
-                            self.steer_angle = MAX_STEER
+                            self.desired_steer_angle = MAX_STEER
                         else:
-                            self.steer_angle = -MAX_STEER
+                            self.desired_steer_angle = -MAX_STEER
                             
                     elif abs(processed_steer_angle - self.curr_steer_angle) > OFFSET_ANGLE:
                     # else:
-                        self.steer_angle = processed_steer_angle
-                        
-            # if msg.one_lane == LaneVisibility.BOTH.value:
-            #     if self.run_state == RunStates.RUNNING:
-            #         processed_steer_angle = msg.steer_angle
-            #         if abs(processed_steer_angle) > MAX_STEER:
-            #             if processed_steer_angle > 0:
-            #                 self.steer_angle = MAX_STEER
-            #             else:
-            #                 self.steer_angle = -MAX_STEER
-                            
-            #         elif abs(processed_steer_angle - self.curr_steer_angle) > OFFSET_ANGLE:
-            #         # else:
-            #             self.steer_angle = processed_steer_angle
-
-            #     elif self.run_state == RunStates.HARD_TURN:
-            #         self.run_state = RunStates.RUNNING
+                        self.desired_steer_angle = processed_steer_angle
             
-            # elif msg.one_lane == LaneVisibility.LEFT.value: # turn right
-            #     if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
-            #         self.curr_steer_angle = TURN_ANGLE
-            #         self.run_state = RunStates.HARD_TURN
+            elif msg.one_lane == LaneVisibility.LEFT.value: # turn right
+                if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
+                    
+                    # self.desired_steer_angle = TURN_ANGLE
+                    
+                    self.desired_steer_angle = self.curr_steer_angle # keep current steer angle
+                    self.run_state = RunStates.HARD_TURN
             
-            # elif msg.one_lane == LaneVisibility.RIGHT.value: # turn left
-            #     if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
-            #         self.curr_steer_angle = -TURN_ANGLE
-            #         self.run_state = RunStates.HARD_TURN
-            # else:
-            #     if self.run_state == RunStates.RUNNING:
-            #         self.steer_angle = 0
-            #     elif self.run_state == RunStates.HARD_TURN:
-            #         self.run_state = RunStates.RUNNING
+            elif msg.one_lane == LaneVisibility.RIGHT.value: # turn left
+                if math.fabs(msg.steer_angle) > OFFSET_TURN and self.run_state == RunStates.RUNNING:
+                    
+                    # self.desired_steer_angle = -TURN_ANGLE
+                    
+                    self.desired_steer_angle = self.curr_steer_angle # keep current steer angle
+                    self.run_state = RunStates.HARD_TURN
+                    
+            elif msg.one_lane == LaneVisibility.NONE.value: # no lanes -> go straight forward
+                if self.run_state == RunStates.HARD_TURN:
+                    self.run_state = RunStates.RUNNING
+                    
+                if self.run_state == RunStates.RUNNING:
+                    self.desired_steer_angle = 0
         
     def pedestrian_check(self, msg):
         if self.sys_state == SystemStates.ONLINE:
@@ -437,7 +433,7 @@ class actionNODE:
         
         EPSILON = 0.45
         # MOD = 10
-        #offset_speed = abs(self.steer_angle/100 - OFFSET_ANGLE)
+        #offset_speed = abs(self.desired_steer_angle/100 - OFFSET_ANGLE)
         # if DEBUG_MOD_SPEED:
         #     print("offset speed: ",offset_speed)
         # if (self.base_speed - offset_speed) > 0:
@@ -447,24 +443,27 @@ class actionNODE:
         
         if self.steer_end < time.time():
             self.steer_end = time.time() + 0.1
-            self.curr_steer_angle = self.steer_angle
+            self.curr_steer_angle = self.desired_steer_angle
         
         # self.control.setSteer(self.curr_steer_angle)
         #self.control.setSteer(0)
         speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * EPSILON * MAX_SPEED)
+        #self.control.setSteer(self.curr_steer_angle)
         self.control.setSteer(self.curr_steer_angle)
-        #self.control.setSteer(0)
         print("angle: {}".format(self.curr_steer_angle))
-        # self.control.setSpeed(speed)
-        #self.control.setSpeed(0.15)
+        #self.control.setSpeed(speed)
+        self.speed_action()
         print("speed: {}".format(speed))
         
     def turn_action(self):
         EPSILON = 0.3
         
-        self.control.setSteer(self.curr_steer_angle)
+        self.setSteer(self.curr_steer_angle)
+        
         speed = MAX_SPEED - (math.fabs(self.curr_steer_angle) / MAX_STEER * EPSILON * MAX_SPEED)
-        self.control.setSpeed(speed)
+        # self.setSpeed(speed)
+        
+        self.speed_action()
 
     def wait_action(self):
         global traffic_sign_type
@@ -588,16 +587,20 @@ class actionNODE:
                 self.auto_control()
             rospy.sleep(0.1)
             
+    def terminate(self):
+        self.sys_state = SystemStates.OFFLINE
+        self.control.brake(0)
+            
 def main():
     action_node = actionNODE()
     rospy.loginfo("START actionNODE")
     try:
         action_node.run()
     except Exception as e:
+        action_node.terminate()
         print(e)
-        action_node.control.brake(0)
     finally:
-        action_node.control.brake(0)
+        action_node.terminate()
         rospy.loginfo("STOP actionNODE")
                 
 if __name__ == "__main__":
