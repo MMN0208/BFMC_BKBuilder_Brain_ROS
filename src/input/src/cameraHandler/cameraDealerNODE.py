@@ -68,8 +68,8 @@ class cameraDealerNODE():
     def _init_socket(self):
         """Initialize the socket client. 
         """
-        serverIp   =  '192.168.88.201' # PC ip
-        port       =  2244            # com port
+        serverIp   =  '192.168.62.142' # PC ip
+        port       =  2245            # com port
         
         self.client_socket = socket.socket()
         self.connection = None

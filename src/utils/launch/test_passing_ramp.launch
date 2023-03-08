@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="input"   type = "imuSimulationNODE.py"   name="imuNODE"              output="screen"/>
+    <node pkg="action" type="passingRampNODE.py" 		name="passingRampNODE"  		output="screen"/> 
+</launch>

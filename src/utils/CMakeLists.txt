@@ -9,6 +9,7 @@ project(utils)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   std_msgs
+  sensor_msgs
   message_generation
 )
 
@@ -48,10 +49,16 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  pedestrian.msg
+  pedestrian_output.msg
   IMU.msg
   localisation.msg
+  traffic_light.msg
+  traffic_sign.msg
   vehicles.msg
   environmental.msg
+  lane.msg
+  perception.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -71,6 +78,7 @@ add_service_files(
 generate_messages(
   DEPENDENCIES
   std_msgs  # Or other packages containing msgs
+  sensor_msgs
 )
 
 ################################################

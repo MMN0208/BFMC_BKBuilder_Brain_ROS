@@ -1,0 +1,8 @@
+float32 steer_angle
+float32 radius_of_curvature
+float32 off_centre
+int8 left_lane_type
+int8 right_lane_type
+int32 midpoint
+int32 angle_curvature
+int8 one_lane
